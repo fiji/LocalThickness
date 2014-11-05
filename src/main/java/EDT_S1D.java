@@ -1,8 +1,11 @@
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
-import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 /* Bob Dougherty 8/8/2006
 Saito-Toriwaki algorithm for Euclidian Distance Transformation.

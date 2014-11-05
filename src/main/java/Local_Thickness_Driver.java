@@ -1,8 +1,10 @@
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
-import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
+import ij.process.ImageProcessor;
 
 /* Bob Dougherty 8/10/2007
 Perform all of the steps for the local thickness calculaton

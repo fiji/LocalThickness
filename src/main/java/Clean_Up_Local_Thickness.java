@@ -1,7 +1,9 @@
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
 import ij.plugin.filter.PlugInFilter;
-import ij.process.*;
-import java.awt.*;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 /* Bob Dougherty August 1, 2007
 
