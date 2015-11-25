@@ -50,7 +50,7 @@ public class LocalThicknessWrapper implements PlugIn
     /**
      * Controls whether the Thickness map gets masked with the original @see MaskThicknessMapWithOriginal
      */
-    public boolean maskThicknessMask = true;
+    public boolean maskThicknessMap = true;
 
     public LocalThicknessWrapper() {
         setSilence(true);
@@ -119,7 +119,7 @@ public class LocalThicknessWrapper implements PlugIn
         thicknessCleaningPlugin.run(null);
         resultImage = thicknessCleaningPlugin.getResultImage();
 
-        if (maskThicknessMask) {
+        if (maskThicknessMap) {
             thicknessMask.inverse = inverse;
             thicknessMask.threshold = threshold;
             resultImage = thicknessMask.trimOverhang(image, resultImage);
