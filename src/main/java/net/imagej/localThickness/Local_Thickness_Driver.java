@@ -77,7 +77,7 @@ public class Local_Thickness_Driver implements  PlugInFilter {
 		IJ.showStatus("Done");
 	}
 	//Modified from ImageJ code by Wayne Rasband
-    String stripExtension(String name) {
+	static String stripExtension(String name) {
         if (name!=null) {
             int dotIndex = name.lastIndexOf(".");
             if (dotIndex>=0)

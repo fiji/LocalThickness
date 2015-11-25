@@ -56,24 +56,41 @@ may be forthcoming.
 
 */
 public class EDT_S1D implements  PlugInFilter {
+	public static final int DEFAULT_THRESHOLD = 128;
+	public static final boolean DEFAULT_INVERSE = false;
+
 	private ImagePlus imp;
+	private boolean cancelled;
+
 	public byte[][] data;
 	public int w,h,d;
-	public int thresh;
-	public boolean inverse;
+	public int thresh = DEFAULT_THRESHOLD;
+	public boolean inverse = DEFAULT_INVERSE;
+	public boolean showOptions = true;
+	public boolean runSilent = false;
+	private ImagePlus resultImage;
 
 	public int setup(String arg, ImagePlus imp) {
- 		this.imp = imp;
+		this.imp = imp;
 		return DOES_8G;
 	}
 	public void run(ImageProcessor ip) {
+		resultImage = null;
+
 		ImageStack stack = imp.getStack();
 		w = stack.getWidth();
 		h = stack.getHeight();
 		d = imp.getStackSize();
 		int nThreads = Runtime.getRuntime().availableProcessors();
 
-		if(!getScale())return;
+		cancelled = false;
+		if (showOptions) {
+			if(!getScale()) {
+				cancelled = true;
+				return;
+			}
+		}
+
 		//Create references to input data
 		data = new byte[d][];
 		for (int k = 0; k < d; k++)data[k] = (byte[])stack.getPixels(k+1);
@@ -99,7 +116,7 @@ public class EDT_S1D implements  PlugInFilter {
 			}
 		}catch(InterruptedException ie){
 			IJ.error("A thread was interrupted in step 1 .");
-		}		
+		}
 		//Transformation 2.  g (in s) -> h (in s)
 		IJ.showStatus("EDT transformation 2/3");
 		Step2Thread[] s2t = new Step2Thread[nThreads];
@@ -127,7 +144,7 @@ public class EDT_S1D implements  PlugInFilter {
 			}
 		}catch(InterruptedException ie){
 			IJ.error("A thread was interrupted in step 3 .");
-		}		
+		}
 		//Find the largest distance for scaling
 		//Also fill in the background values.
 		float distMax = 0;
@@ -149,37 +166,51 @@ public class EDT_S1D implements  PlugInFilter {
 		IJ.showProgress(1.0);
 		IJ.showStatus("Done");
 		String title = stripExtension(imp.getTitle());
-		ImagePlus impOut = new ImagePlus(title+"EDT",sStack);
-		impOut.getProcessor().setMinAndMax(0,distMax);
-		impOut.show();
-		IJ.run("Fire");
+		resultImage = new ImagePlus(title+"_EDT",sStack);
+		resultImage.getProcessor().setMinAndMax(0,distMax);
+
+		if(!runSilent) {
+			resultImage.show();
+			IJ.run("Fire");
+		}
 	}
 	//Modified from ImageJ code by Wayne Rasband
-    String stripExtension(String name) {
-        if (name!=null) {
-            int dotIndex = name.lastIndexOf(".");
-            if (dotIndex>=0)
-                name = name.substring(0, dotIndex);
+	String stripExtension(String name) {
+		if (name!=null) {
+			int dotIndex = name.lastIndexOf(".");
+			if (dotIndex>=0)
+				name = name.substring(0, dotIndex);
 		}
 		return name;
-    }
+	}
+
+	public ImagePlus getResultImage() {
+		return resultImage;
+	}
+
 	boolean getScale() {
 		thresh = (int)Prefs.get("edtS1.thresh", 128);
 		inverse = Prefs.get("edtS1.inverse", false);
 		GenericDialog gd = new GenericDialog("EDT...", IJ.getInstance());
 		gd.addNumericField("Threshold (1 to 255; value < thresh is background)", thresh, 0);
-       	gd.addCheckbox("Inverse case (background when value >= thresh)",inverse);
+		gd.addCheckbox("Inverse case (background when value >= thresh)",inverse);
 		gd.showDialog();
 		if (gd.wasCanceled())return false;
 		thresh = (int)gd.getNextNumber();
-      	inverse = gd.getNextBoolean();
+		inverse = gd.getNextBoolean();
 		Prefs.set("edtS1.thresh", thresh);
 		Prefs.set("edtS1.inverse", inverse);
 		return true;
 	}
+
+	public boolean gotCancelled()
+	{
+		return cancelled;
+	}
+
 	class Step1Thread extends Thread{
 		int thread,nThreads,w,h,d,thresh;
-		float[][] s; 
+		float[][] s;
 		byte[][] data;
 		public Step1Thread(int thread, int nThreads, int w, int h, int d, int thresh, float[][] s,  byte[][] data){
 			this.thread = thread;
@@ -198,9 +229,9 @@ public class EDT_S1D implements  PlugInFilter {
 			if(h > n) n = h;
 			if(d > n) n = d;
 			int noResult = 3*(n+1)*(n+1);
-			boolean[] background = new boolean[n];			
+			boolean[] background = new boolean[n];
 			boolean nonempty;
-			int test, min;			
+			int test, min;
 			for(int k = thread; k < d; k+=nThreads){
 				IJ.showProgress(k/(1.*d));
 				sk = s[k];
@@ -235,7 +266,7 @@ public class EDT_S1D implements  PlugInFilter {
 	}//Step1Thread
 	class Step2Thread extends Thread{
 		int thread,nThreads,w,h,d;
-		float[][] s; 
+		float[][] s;
 		public Step2Thread(int thread, int nThreads, int w, int h, int d, float[][] s){
 			this.thread = thread;
 			this.nThreads = nThreads;
@@ -283,7 +314,7 @@ public class EDT_S1D implements  PlugInFilter {
 	}//Step2Thread	
 	class Step3Thread extends Thread{
 		int thread,nThreads,w,h,d;
-		float[][] s; 
+		float[][] s;
 		byte[][] data;
 		public Step3Thread(int thread, int nThreads, int w, int h, int d, float[][] s, byte[][] data){
 			this.thread = thread;
@@ -320,7 +351,7 @@ public class EDT_S1D implements  PlugInFilter {
 						zStop = d-1;
 						while((zStop > 0)&&(tempS[zStop] == 0))zStop--;
 						if(zStop < (d-1))zStop++;
-	
+
 						for(int k = 0; k < d; k++){
 							//Limit to the non-background to save time,
 							if(((data[k][i+w*j]&255) >= thresh)^inverse){

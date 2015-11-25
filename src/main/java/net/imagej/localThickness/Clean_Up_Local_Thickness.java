@@ -49,14 +49,19 @@ offficial definition of local thickness.
 */
 public class Clean_Up_Local_Thickness implements  PlugInFilter {
 	private ImagePlus imp;
+	private ImagePlus resultImage;
+
 	public float[][] s, sNew;
 	public int w,h,d;
+	public boolean runSilent = false;
 
 	public int setup(String arg, ImagePlus imp) {
  		this.imp = imp;
 		return DOES_32;
 	}
 	public void run(ImageProcessor ip) {
+		resultImage = null;
+
 		ImageStack stack = imp.getStack();
 		w = stack.getWidth();
 		h = stack.getHeight();
@@ -111,10 +116,13 @@ public class Clean_Up_Local_Thickness implements  PlugInFilter {
 		}//k
 		IJ.showStatus("Clean Up Local Thickness complete");
 		String title = stripExtension(imp.getTitle());
-		ImagePlus impOut = new ImagePlus(title+"_CL",newStack);
-		impOut.getProcessor().setMinAndMax(0,2*imp.getProcessor().getMax());
-		impOut.show();
-		IJ.run("Fire");
+		resultImage = new ImagePlus(title+"_CL",newStack);
+		resultImage.getProcessor().setMinAndMax(0,2*imp.getProcessor().getMax());
+
+		if (!runSilent) {
+			resultImage.show();
+			IJ.run("Fire");
+		}
 	}
 	float setFlag(int i,int j,int k){
 		if(s[k][i+w*j]==0)return 0;
@@ -315,4 +323,8 @@ public class Clean_Up_Local_Thickness implements  PlugInFilter {
 		}
 		return name;
     }
+
+	public ImagePlus getResultImage() {
+		return resultImage;
+	}
 }

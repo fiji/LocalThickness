@@ -53,9 +53,10 @@ Version 3.1  Multiplies the output by 2 to conform with the definition of local 
 */
 public class Local_Thickness_Parallel implements  PlugInFilter {
 	private ImagePlus imp;
-	private ImagePlus resultImage = null;
+	private ImagePlus resultImage;
 	public float[][] data;
 	public int w,h,d;
+	public boolean runSilent = false;
 
 	public int setup(String arg, ImagePlus imp) {
  		this.imp = imp;
@@ -154,9 +155,13 @@ public class Local_Thickness_Parallel implements  PlugInFilter {
 		}
 		IJ.showStatus("Local Thickness complete");
 		String title = stripExtension(imp.getTitle());
-		resultImage.setTitle(title+"_LT_");
+		resultImage.setTitle(title+"_LT");
 		resultImage.getProcessor().setMinAndMax(0,sMax);
-		resultImage.updateAndDraw();
+
+		if (!runSilent) {
+			resultImage.show();
+			IJ.run("Fire");
+		}
 	}
 	//Modified from ImageJ code by Wayne Rasband
     String stripExtension(String name) {
@@ -167,6 +172,11 @@ public class Local_Thickness_Parallel implements  PlugInFilter {
 		}
 		return name;
     }
+
+	public ImagePlus getResultImage() {
+		return resultImage;
+	}
+
 	class LTThread extends Thread{
 		int thread,nThreads,w,h,d,nR;
 		float[][] s;

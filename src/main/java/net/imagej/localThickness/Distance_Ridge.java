@@ -59,14 +59,19 @@ Version 3.1 Oct. 1, 2006.  Faster scanning of search points.
 */
 public class Distance_Ridge implements  PlugInFilter {
 	private ImagePlus imp;
+	private ImagePlus resultImage;
+
 	public float[][] data;
 	public int w,h,d;
+	public boolean runSilent = false;
 
 	public int setup(String arg, ImagePlus imp) {
- 		this.imp = imp;
+		this.imp = imp;
 		return DOES_32;
 	}
 	public void run(ImageProcessor ip) {
+		resultImage = null;
+
 		ImageStack stack = imp.getStack();
 		w = stack.getWidth();
 		h = stack.getHeight();
@@ -175,8 +180,8 @@ public class Distance_Ridge implements  PlugInFilter {
 												numComp = numCompX + numCompY + numCompZ;
 												if(numComp > 0){
 													sk1Sq = (int)(sk1[i1+w*j1]*sk1[i1+w*j1] + 0.5f);
-														if(sk1Sq >= rSqTemplate[numComp-1][sk0SqInd])
-															notRidgePoint = true;
+													if(sk1Sq >= rSqTemplate[numComp-1][sk0SqInd])
+														notRidgePoint = true;
 												}
 											}//if in grid for i1
 											if(notRidgePoint)break;
@@ -194,10 +199,13 @@ public class Distance_Ridge implements  PlugInFilter {
 		}//k
 		IJ.showStatus("Distance Ridge complete");
 		String title = stripExtension(imp.getTitle());
-		ImagePlus impOut = new ImagePlus(title+"_DR",newStack);
-		impOut.getProcessor().setMinAndMax(0,distMax);
-		impOut.show();
-		IJ.run("Fire");
+		resultImage = new ImagePlus(title+"_DR",newStack);
+		resultImage.getProcessor().setMinAndMax(0,distMax);
+
+		if (!runSilent) {
+			resultImage.show();
+			IJ.run("Fire");
+		}
 	}
 	//For each offset from the origin, (dx,dy,dz), and each radius-squared,
 	//rSq, find the smallest radius-squared, r1Squared, such that a ball
@@ -253,12 +261,16 @@ public class Distance_Ridge implements  PlugInFilter {
 		}
 		return r1Sq;
 	}	//Modified from ImageJ code by Wayne Rasband
-    String stripExtension(String name) {
-        if (name!=null) {
-            int dotIndex = name.lastIndexOf(".");
-            if (dotIndex>=0)
-                name = name.substring(0, dotIndex);
+	String stripExtension(String name) {
+		if (name!=null) {
+			int dotIndex = name.lastIndexOf(".");
+			if (dotIndex>=0)
+				name = name.substring(0, dotIndex);
 		}
 		return name;
-    }
+	}
+
+	public ImagePlus getResultImage() {
+		return resultImage;
+	}
 }
