@@ -30,6 +30,7 @@ public class LocalThicknessWrapper implements PlugIn
     private static final Distance_Ridge distanceRidgePlugin = new Distance_Ridge();
     private static final Local_Thickness_Parallel localThicknessPlugin = new Local_Thickness_Parallel();
     private static final Clean_Up_Local_Thickness thicknessCleaningPlugin = new Clean_Up_Local_Thickness();
+    private static final MaskThicknessMapWithOriginal thicknessMask = new MaskThicknessMapWithOriginal();
 
     private ImagePlus resultImage = null;
     private boolean showOptions = false;
@@ -45,6 +46,11 @@ public class LocalThicknessWrapper implements PlugIn
      * Inverts thresholding so that pixels with values >= threshold are considered background.
      */
     public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
+
+    /**
+     * Controls whether the Thickness map gets masked with the original @see MaskThicknessMapWithOriginal
+     */
+    public boolean maskThicknessMask = true;
 
     public LocalThicknessWrapper() {
         setSilence(true);
@@ -112,6 +118,12 @@ public class LocalThicknessWrapper implements PlugIn
         thicknessCleaningPlugin.setup("", resultImage);
         thicknessCleaningPlugin.run(null);
         resultImage = thicknessCleaningPlugin.getResultImage();
+
+        if (maskThicknessMask) {
+            thicknessMask.inverse = inverse;
+            thicknessMask.threshold = threshold;
+            resultImage = thicknessMask.trimOverhang(image, resultImage);
+        }
 
         resultImage.setTitle(originalTitle + titleSuffix);
         resultImage.copyScale(image);
