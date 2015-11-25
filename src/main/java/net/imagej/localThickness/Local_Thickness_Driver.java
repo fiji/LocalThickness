@@ -1,3 +1,5 @@
+package net.imagej.localThickness;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
