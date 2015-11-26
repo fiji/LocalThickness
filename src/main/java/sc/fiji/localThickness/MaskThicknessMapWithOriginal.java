@@ -17,8 +17,6 @@ import ij.process.ImageProcessor;
  */
 public class MaskThicknessMapWithOriginal
 {
-    private ImagePlus resultImage = null;
-
     /**
      * Pixels with colors < threshold are considered background
      */
@@ -28,6 +26,8 @@ public class MaskThicknessMapWithOriginal
      * If true, inverts the threshold condition, i.e. color >= threshold is background
      */
     public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
+
+    private ImagePlus resultImage = null;
 
     /**
      * Creates a copy of the thicknessMap, where "overhanging" pixels have been removed.

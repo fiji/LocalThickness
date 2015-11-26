@@ -29,32 +29,6 @@ public class MaskThicknessMapWithOriginalTest
 
     private MaskThicknessMapWithOriginal thicknessMasker;
 
-    private static ImagePlus createTestImage(String title, int width, int height, int slices, int bitDepth, int color) {
-        ImageStack stack = new ImageStack(width, height);
-        ImageProcessor processor;
-
-        switch (bitDepth) {
-            case 8:
-                processor = new ByteProcessor(width, height);
-                break;
-            case 32:
-                processor = new FloatProcessor(width, height);
-                break;
-            default:
-                return null;
-        }
-
-        processor.setColor(color);
-        processor.fill();
-
-        for (int i = 0; i < slices; i++) {
-            stack.addSlice(processor);
-        }
-
-        ImagePlus testImage = new ImagePlus(title, stack);
-        return  testImage;
-    }
-
     @Before
     public void setUp() {
         thicknessMasker = new MaskThicknessMapWithOriginal();
@@ -185,5 +159,31 @@ public class MaskThicknessMapWithOriginalTest
         }
 
         return true;
+    }
+
+    private static ImagePlus createTestImage(String title, int width, int height, int slices, int bitDepth, int color) {
+        ImageStack stack = new ImageStack(width, height);
+        ImageProcessor processor;
+
+        switch (bitDepth) {
+            case 8:
+                processor = new ByteProcessor(width, height);
+                break;
+            case 32:
+                processor = new FloatProcessor(width, height);
+                break;
+            default:
+                return null;
+        }
+
+        processor.setColor(color);
+        processor.fill();
+
+        for (int i = 0; i < slices; i++) {
+            stack.addSlice(processor);
+        }
+
+        ImagePlus testImage = new ImagePlus(title, stack);
+        return  testImage;
     }
 }

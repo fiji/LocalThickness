@@ -7,38 +7,20 @@ import ij.plugin.PlugIn;
 import ij.process.StackStatistics;
 
 /**
- * A class which wraps the different stages of LocalThickness processing.
- *
- * By default LocalThicknessWrapper runs the stages "silently" so that the user doesn't see the intermediate images
- * between the them. Even if the intermediate images are shown, the user won't be able to interrupt the process like in
- * Local_Thickness_Driver (think what happens if an image is closed before WindowManager.getCurrentImage()
- * gets called...).
- *
- * By default the class won't show the options (threshold, inverse) dialog for LocalThickness.
- * Instead it's run with default values defined in EDT_S1D.DEFAULT_INVERSE and EDT_S1D.DEFAULT_THRESHOLD respectively.
- *
- * Mask
- *
- * Calibration
- *
+ * A class which can be used to programmatically run and control the various steps in local thickness map calculations.
+ +
  * @author <a href="mailto:rdomander@rvc.ac.uk">Richard Domander</a>
  */
 public class LocalThicknessWrapper implements PlugIn
 {
     private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
     private static final String DEFAULT_TITLE = "ThicknessMap";
-
     private static final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
     private static final Distance_Ridge distanceRidgePlugin = new Distance_Ridge();
     private static final Local_Thickness_Parallel localThicknessPlugin = new Local_Thickness_Parallel();
     private static final Clean_Up_Local_Thickness thicknessCleaningPlugin = new Clean_Up_Local_Thickness();
     private static final MaskThicknessMapWithOriginal thicknessMask = new MaskThicknessMapWithOriginal();
 
-    private ImagePlus resultImage = null;
-    private boolean showOptions = false;
-    private String titleSuffix = DEFAULT_TITLE_SUFFIX;
-
-    // Fields used to set LocalThickness options programmatically
     /**
      * A pixel is considered to be a part of the background if its color < threshold
      */
@@ -58,6 +40,10 @@ public class LocalThicknessWrapper implements PlugIn
      * Controls whether the pixel values in the Thickness map get scaled @see LocalThicknessWrapper.calibratePixels()
      */
     public boolean calibratePixels = true;
+
+    private ImagePlus resultImage = null;
+    private boolean showOptions = false;
+    private String titleSuffix = DEFAULT_TITLE_SUFFIX;
 
     public LocalThicknessWrapper() {
         setSilence(true);
@@ -204,6 +190,19 @@ public class LocalThicknessWrapper implements PlugIn
     }
 
     /**
+     * @param imageTitleSuffix  The suffix that's added to the end of the title of the resulting thickness map image
+     */
+    public void setTitleSuffix(String imageTitleSuffix) {
+        titleSuffix = imageTitleSuffix;
+
+        if (titleSuffix == null || titleSuffix.isEmpty()) {
+            titleSuffix = DEFAULT_TITLE_SUFFIX;
+        }
+
+        assert titleSuffix != null && !this.titleSuffix.isEmpty();
+    }
+
+    /**
      * @return  The thickness map from the last run of the plugin.
      *          Null if something went wrong, e.g. the user cancelled the plugin.
      */
@@ -229,18 +228,5 @@ public class LocalThicknessWrapper implements PlugIn
 
         resultImage.show();
         IJ.run("Fire"); // changes the color palette of the output image
-    }
-
-    /**
-     * @param imageTitleSuffix  The suffix that's added to the end of the title of the resulting thickness map image
-     */
-    public void setTitleSuffix(String imageTitleSuffix) {
-        titleSuffix = imageTitleSuffix;
-
-        if (titleSuffix == null || titleSuffix.isEmpty()) {
-            titleSuffix = DEFAULT_TITLE_SUFFIX;
-        }
-
-        assert titleSuffix != null && !this.titleSuffix.isEmpty();
     }
 }
