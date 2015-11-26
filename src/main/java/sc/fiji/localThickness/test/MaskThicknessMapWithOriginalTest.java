@@ -1,4 +1,4 @@
-package net.imagej.localThickness.test;
+package sc.fiji.localThickness.test;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -6,7 +6,7 @@ import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import net.imagej.localThickness.MaskThicknessMapWithOriginal;
+import sc.fiji.localThickness.MaskThicknessMapWithOriginal;
 import org.junit.Before;
 import org.junit.Test;
 

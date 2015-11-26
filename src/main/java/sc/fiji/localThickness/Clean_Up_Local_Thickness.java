@@ -1,4 +1,4 @@
-package net.imagej.localThickness;
+package sc.fiji.localThickness;
 
 import ij.IJ;
 import ij.ImagePlus;
