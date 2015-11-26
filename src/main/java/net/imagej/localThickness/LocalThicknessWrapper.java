@@ -2,7 +2,9 @@ package net.imagej.localThickness;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.plugin.PlugIn;
+import ij.process.StackStatistics;
 
 /**
  * A class which wraps the different stages of LocalThickness processing.
@@ -52,6 +54,11 @@ public class LocalThicknessWrapper implements PlugIn
      */
     public boolean maskThicknessMap = true;
 
+    /**
+     * Controls whether the pixel values in the Thickness map get scaled @see LocalThicknessWrapper.calibratePixels()
+     */
+    public boolean calibratePixels = true;
+
     public LocalThicknessWrapper() {
         setSilence(true);
         geometryToDistancePlugin.showOptions = showOptions;
@@ -79,6 +86,12 @@ public class LocalThicknessWrapper implements PlugIn
         geometryToDistancePlugin.runSilent = silent;
     }
 
+    /**
+     * Creates a thickness map from the given image
+     *
+     * @param image An 8-bit binary image
+     * @return      A 32-bit floating point thickness map image
+     */
     public ImagePlus processImage(ImagePlus image) {
         resultImage = null;
         String originalTitle = Local_Thickness_Driver.stripExtension(image.getTitle());
@@ -128,9 +141,72 @@ public class LocalThicknessWrapper implements PlugIn
         resultImage.setTitle(originalTitle + titleSuffix);
         resultImage.copyScale(image);
 
+        if (calibratePixels) {
+            calibratePixels();
+        }
+
         return getResultImage();
     }
 
+    private void calibratePixels() {
+        pixelValuesToCalibratedValues();
+        backgroundToNaN(0x00);
+    }
+
+    /**
+     * Sets the value of the background pixels in the result image to Float.NaN. Doing this prevents them from
+     * affecting statistical measures calculated from the image, e.g. mean pixel value.
+     *
+     * @param   backgroundColor         The color used to identify background pixels (usually 0x00)
+     * @throws  NullPointerException    If this.resultImage == null
+     */
+    private void backgroundToNaN(int backgroundColor) {
+        if (resultImage == null) {
+            throw new NullPointerException("The resultImage in LocalThicknessWrapper is null");
+        }
+
+        final int depth = resultImage.getNSlices();
+        final int pixelsPerSlice = resultImage.getWidth() * resultImage.getHeight();
+        final ImageStack stack = resultImage.getStack();
+
+        for (int z = 1; z <= depth; z++) {
+            float pixels[] = (float[]) stack.getPixels(z);
+            for (int i = 0; i < pixelsPerSlice; i++) {
+                if (Float.compare(pixels[i], backgroundColor) == 0) {
+                    pixels[i] = Float.NaN;
+                }
+            }
+        }
+    }
+
+    /**
+     * Multiplies all pixel values in the result image by pixelWidth. This ways the pixel values represent sample
+     * thickness in real units.
+     *
+     * @throws  NullPointerException    If this.resultImage == null
+     */
+    private void pixelValuesToCalibratedValues() {
+        if (resultImage == null) {
+            throw new NullPointerException("The resultImage in LocalThicknessWrapper is null");
+        }
+
+        double pixelWidth = resultImage.getCalibration().pixelWidth;
+        ImageStack stack = resultImage.getStack();
+        final int depth = stack.getSize();
+
+        for (int z = 1; z <= depth; z++) {
+            stack.getProcessor(z).multiply(pixelWidth);
+        }
+
+        StackStatistics stackStatistics = new StackStatistics(resultImage);
+        double maxPixelValue = stackStatistics.max;
+        resultImage.getProcessor().setMinAndMax(0, maxPixelValue);
+    }
+
+    /**
+     * @return  The thickness map from the last run of the plugin.
+     *          Null if something went wrong, e.g. the user cancelled the plugin.
+     */
     public ImagePlus getResultImage() {
         return resultImage;
     }
