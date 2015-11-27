@@ -75,12 +75,15 @@ public class LocalThicknessWrapper implements PlugIn
     /**
      * Creates a thickness map from the given image
      *
-     * @param image An 8-bit binary image
-     * @return      A 32-bit floating point thickness map image
+     * @param inputImage    An 8-bit binary image
+     * @return              A 32-bit floating point thickness map image
      */
-    public ImagePlus processImage(ImagePlus image) {
+    public ImagePlus processImage(ImagePlus inputImage) {
+        String originalTitle = Local_Thickness_Driver.stripExtension(inputImage.getTitle());
+        ImagePlus image = inputImage.duplicate();
+
         resultImage = null;
-        String originalTitle = Local_Thickness_Driver.stripExtension(image.getTitle());
+
         if (originalTitle == null || originalTitle.isEmpty()) {
             originalTitle = DEFAULT_TITLE;
         }

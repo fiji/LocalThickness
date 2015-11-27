@@ -6,9 +6,9 @@ import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import sc.fiji.localThickness.MaskThicknessMapWithOriginal;
 import org.junit.Before;
 import org.junit.Test;
+import sc.fiji.localThickness.MaskThicknessMapWithOriginal;
 
 import java.awt.*;
 
