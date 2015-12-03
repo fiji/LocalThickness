@@ -17,12 +17,12 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>6.1.3</version>
+		<version>17.0.0</version>
 		<relativePath />
 	</parent>
 
 	<artifactId>LocalThickness_</artifactId>
-	<version>3.1.2-SNAPSHOT</version>
+	<version>4.0.0-SNAPSHOT</version>
 
 	<name>plugins/LocalThickness_.jar</name>
 	<description />
