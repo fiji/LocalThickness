@@ -37,7 +37,7 @@ adjacent to background voxels are have their local thickness values replaced by 
 their non-background neighbors that do not border background points.
 
 August 10.  Version 3 This version also multiplies the local thickness by 2 to conform with the
-offficial definition of local thickness.
+official definition of local thickness.
 
  License:
 	Copyright (c)  2007, OptiNav, Inc.
