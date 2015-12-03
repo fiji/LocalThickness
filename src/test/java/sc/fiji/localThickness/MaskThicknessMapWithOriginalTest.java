@@ -1,4 +1,4 @@
-package sc.fiji.localThickness.test;
+package sc.fiji.localThickness;
 
 import ij.ImagePlus;
 import ij.ImageStack;
