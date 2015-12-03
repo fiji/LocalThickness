@@ -1,4 +1,13 @@
+
 package sc.fiji.localThickness;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import java.awt.Rectangle;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -6,184 +15,222 @@ import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import org.junit.Before;
-import org.junit.Test;
-import sc.fiji.localThickness.MaskThicknessMapWithOriginal;
-
-import java.awt.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author Richard Domander
  */
-public class MaskThicknessMapWithOriginalTest
-{
-    private static final int WHITE = 0xFF;
-    private static final int BLACK = 0x00;
-    private static final int WIDTH = 10;
-    private static final int HALF_WIDTH = WIDTH / 2;
-    private static final int HEIGHT = 10;
-    private static final int DEPTH = 2;
+public class MaskThicknessMapWithOriginalTest {
 
-    private MaskThicknessMapWithOriginal thicknessMasker;
+	private static final int WHITE = 0xFF;
+	private static final int BLACK = 0x00;
+	private static final int WIDTH = 10;
+	private static final int HALF_WIDTH = WIDTH / 2;
+	private static final int HEIGHT = 10;
+	private static final int DEPTH = 2;
 
-    @Before
-    public void setUp() {
-        thicknessMasker = new MaskThicknessMapWithOriginal();
-        thicknessMasker.threshold = 128;
-        thicknessMasker.inverse = false;
-    }
+	private MaskThicknessMapWithOriginal thicknessMasker;
 
-    @Test (expected = NullPointerException.class)
-    public void testTrimOverhangThrowsNullPointerExceptionWhenOriginalImageIsNull() throws Exception {
-        ImagePlus thickness = createTestImage("thickness", WIDTH, HEIGHT, 1, 32, BLACK);
-        thicknessMasker.trimOverhang(null, thickness);
-    }
+	@Before
+	public void setUp() {
+		thicknessMasker = new MaskThicknessMapWithOriginal();
+		thicknessMasker.threshold = 128;
+		thicknessMasker.inverse = false;
+	}
 
-    @Test (expected = NullPointerException.class)
-    public void testTrimOverhangThrowsNullPointerExceptionWhenThicknessImageIsNull() throws Exception {
-        ImagePlus original = createTestImage("thickness", WIDTH, HEIGHT, 1, 8, BLACK);
-        thicknessMasker.trimOverhang(original, null);
-    }
+	@Test(expected = NullPointerException.class)
+	public void
+		testTrimOverhangThrowsNullPointerExceptionWhenOriginalImageIsNull()
+			throws Exception
+	{
+		final ImagePlus thickness = createTestImage("thickness", WIDTH, HEIGHT, 1,
+			32, BLACK);
+		thicknessMasker.trimOverhang(null, thickness);
+	}
 
-    @Test (expected = IllegalArgumentException.class)
-    public void testTrimOverhangThrowsIllegalArgumentExceptionWhenOriginalImageHasWrongBitDepth() throws Exception {
-        ImagePlus floatImage = createTestImage("Float image", WIDTH, HEIGHT, 1, 32, BLACK);
-        ImagePlus floatImage2 = createTestImage("Another float image", WIDTH, HEIGHT, 1, 32, BLACK);
-        thicknessMasker.trimOverhang(floatImage, floatImage2);
-    }
+	@Test(expected = NullPointerException.class)
+	public void
+		testTrimOverhangThrowsNullPointerExceptionWhenThicknessImageIsNull()
+			throws Exception
+	{
+		final ImagePlus original = createTestImage("thickness", WIDTH, HEIGHT, 1, 8,
+			BLACK);
+		thicknessMasker.trimOverhang(original, null);
+	}
 
-    @Test (expected = IllegalArgumentException.class)
-    public void testTrimOverhangThrowsIllegalArgumentExceptionWhenThicknessImageHasWrongBitDepth() throws Exception {
-        ImagePlus eightBitImage = createTestImage("8-bit image", WIDTH, HEIGHT, 1, 8, BLACK);
-        ImagePlus eightBitImage2 = createTestImage("Another 8-bit image", WIDTH, HEIGHT, 1, 8, BLACK);
-        thicknessMasker.trimOverhang(eightBitImage, eightBitImage2);
-    }
+	@Test(expected = IllegalArgumentException.class)
+	public void
+		testTrimOverhangThrowsIllegalArgumentExceptionWhenOriginalImageHasWrongBitDepth()
+			throws Exception
+	{
+		final ImagePlus floatImage = createTestImage("Float image", WIDTH, HEIGHT,
+			1, 32, BLACK);
+		final ImagePlus floatImage2 = createTestImage("Another float image", WIDTH,
+			HEIGHT, 1, 32, BLACK);
+		thicknessMasker.trimOverhang(floatImage, floatImage2);
+	}
 
-    @Test (expected = IllegalArgumentException.class)
-    public void testTrimOverhangThrowsIllegalArgumentExceptionWhenImageWidthDiffers() throws Exception {
-        ImagePlus image = createTestImage("Original", WIDTH, HEIGHT, DEPTH, 8, BLACK);
-        ImagePlus tooWide = createTestImage("Too wide", WIDTH + 1, HEIGHT, DEPTH, 32, BLACK);
-        thicknessMasker.trimOverhang(image, tooWide);
-    }
+	@Test(expected = IllegalArgumentException.class)
+	public void
+		testTrimOverhangThrowsIllegalArgumentExceptionWhenThicknessImageHasWrongBitDepth()
+			throws Exception
+	{
+		final ImagePlus eightBitImage = createTestImage("8-bit image", WIDTH,
+			HEIGHT, 1, 8, BLACK);
+		final ImagePlus eightBitImage2 = createTestImage("Another 8-bit image",
+			WIDTH, HEIGHT, 1, 8, BLACK);
+		thicknessMasker.trimOverhang(eightBitImage, eightBitImage2);
+	}
 
-    @Test (expected = IllegalArgumentException.class)
-    public void testTrimOverhangThrowsIllegalArgumentExceptionWhenImageHeightDiffers() throws Exception {
-        ImagePlus image = createTestImage("Original", WIDTH, HEIGHT, DEPTH, 8, BLACK);
-        ImagePlus tooTall = createTestImage("Too wide", WIDTH, HEIGHT + 1, DEPTH, 32, BLACK);
-        thicknessMasker.trimOverhang(image, tooTall);
-    }
+	@Test(expected = IllegalArgumentException.class)
+	public void
+		testTrimOverhangThrowsIllegalArgumentExceptionWhenImageWidthDiffers()
+			throws Exception
+	{
+		final ImagePlus image = createTestImage("Original", WIDTH, HEIGHT, DEPTH, 8,
+			BLACK);
+		final ImagePlus tooWide = createTestImage("Too wide", WIDTH + 1, HEIGHT,
+			DEPTH, 32, BLACK);
+		thicknessMasker.trimOverhang(image, tooWide);
+	}
 
-    @Test (expected = IllegalArgumentException.class)
-    public void testTrimOverhangThrowsIllegalArgumentExceptionWhenImageDepthDiffers() throws Exception {
-        ImagePlus image = createTestImage("Original", WIDTH, HEIGHT, DEPTH, 8, BLACK);
-        ImagePlus tooTall = createTestImage("Too deep", WIDTH, HEIGHT, DEPTH + 1, 32, BLACK);
-        thicknessMasker.trimOverhang(image, tooTall);
-    }
+	@Test(expected = IllegalArgumentException.class)
+	public void
+		testTrimOverhangThrowsIllegalArgumentExceptionWhenImageHeightDiffers()
+			throws Exception
+	{
+		final ImagePlus image = createTestImage("Original", WIDTH, HEIGHT, DEPTH, 8,
+			BLACK);
+		final ImagePlus tooTall = createTestImage("Too wide", WIDTH, HEIGHT + 1,
+			DEPTH, 32, BLACK);
+		thicknessMasker.trimOverhang(image, tooTall);
+	}
 
-    @Test
-    public void testTrimOverhangMasksPixelsCorrectly() throws Exception {
-        // Create an 8-bit test mask that's half black and half white (horizontally),
-        // and an all white test thickness image
-        ImageStack stack = new ImageStack(WIDTH, HEIGHT);
-        Roi left = new Roi(0, 0, HALF_WIDTH, HEIGHT);
-        Roi right = new Roi(HALF_WIDTH, 0, HALF_WIDTH, HEIGHT);
-        ImageProcessor processor = new ByteProcessor(WIDTH, HEIGHT);
-        processor.setColor(WHITE);
-        processor.fill(left);
-        processor.setColor(BLACK);
-        processor.fill(right);
-        for (int i = 0; i < DEPTH; i++) {
-            stack.addSlice(processor);
-        }
-        ImagePlus maskImage = new ImagePlus("testMask", stack);
+	@Test(expected = IllegalArgumentException.class)
+	public void
+		testTrimOverhangThrowsIllegalArgumentExceptionWhenImageDepthDiffers()
+			throws Exception
+	{
+		final ImagePlus image = createTestImage("Original", WIDTH, HEIGHT, DEPTH, 8,
+			BLACK);
+		final ImagePlus tooTall = createTestImage("Too deep", WIDTH, HEIGHT, DEPTH +
+			1, 32, BLACK);
+		thicknessMasker.trimOverhang(image, tooTall);
+	}
 
-        ImagePlus thicknessImage = createTestImage("testThickness", WIDTH, HEIGHT, DEPTH, 32, WHITE);
+	@Test
+	public void testTrimOverhangMasksPixelsCorrectly() throws Exception {
+		// Create an 8-bit test mask that's half black and half white
+		// (horizontally),
+		// and an all white test thickness image
+		final ImageStack stack = new ImageStack(WIDTH, HEIGHT);
+		final Roi left = new Roi(0, 0, HALF_WIDTH, HEIGHT);
+		final Roi right = new Roi(HALF_WIDTH, 0, HALF_WIDTH, HEIGHT);
+		final ImageProcessor processor = new ByteProcessor(WIDTH, HEIGHT);
+		processor.setColor(WHITE);
+		processor.fill(left);
+		processor.setColor(BLACK);
+		processor.fill(right);
+		for (int i = 0; i < DEPTH; i++) {
+			stack.addSlice(processor);
+		}
+		final ImagePlus maskImage = new ImagePlus("testMask", stack);
 
-        // Test masking
-        ImagePlus resultImage = thicknessMasker.trimOverhang(maskImage, thicknessImage);
-        assertNotEquals(null, resultImage);
-        assertNotEquals(null, thicknessMasker.getResultImage());
-        assertEquals("Input mask image must not change", true, areaMatchesColor(maskImage, left.getBounds(), WHITE));
-        assertEquals("Input mask image must not change", true, areaMatchesColor(maskImage, right.getBounds(), BLACK));
-        assertEquals("Input thickness image must not change", true, areaMatchesColor(thicknessImage,
-                new Rectangle(0, 0, WIDTH, HEIGHT), WHITE));
-        assertEquals(true, areaMatchesColor(resultImage, left.getBounds(), WHITE));
-        assertEquals(true, areaMatchesColor(resultImage, right.getBounds(), BLACK));
+		final ImagePlus thicknessImage = createTestImage("testThickness", WIDTH,
+			HEIGHT, DEPTH, 32, WHITE);
 
-        // Test inverted masking
-        thicknessMasker.inverse = true;
-        resultImage = thicknessMasker.trimOverhang(maskImage, thicknessImage);
-        assertEquals(true, areaMatchesColor(resultImage, left.getBounds(), BLACK));
-        assertEquals(true, areaMatchesColor(resultImage, right.getBounds(), WHITE));
-    }
+		// Test masking
+		ImagePlus resultImage = thicknessMasker.trimOverhang(maskImage,
+			thicknessImage);
+		assertNotEquals(null, resultImage);
+		assertNotEquals(null, thicknessMasker.getResultImage());
+		assertEquals("Input mask image must not change", true, areaMatchesColor(
+			maskImage, left.getBounds(), WHITE));
+		assertEquals("Input mask image must not change", true, areaMatchesColor(
+			maskImage, right.getBounds(), BLACK));
+		assertEquals("Input thickness image must not change", true,
+			areaMatchesColor(thicknessImage, new Rectangle(0, 0, WIDTH, HEIGHT),
+				WHITE));
+		assertEquals(true, areaMatchesColor(resultImage, left.getBounds(), WHITE));
+		assertEquals(true, areaMatchesColor(resultImage, right.getBounds(), BLACK));
 
-    /**
-     * Checks that the given are in the image matches the color
-     *
-     * @param image     A 32-bit float image
-     * @param bounds    The limits of the area in the image
-     * @param color     The expected color
-     * @return          True if all the pixels in the area match the color
-     */
-    private static boolean areaMatchesColor(ImagePlus image, Rectangle bounds, int color) {
-        if (image == null || image.getNSlices() < 1) {
-            return false;
-        }
+		// Test inverted masking
+		thicknessMasker.inverse = true;
+		resultImage = thicknessMasker.trimOverhang(maskImage, thicknessImage);
+		assertEquals(true, areaMatchesColor(resultImage, left.getBounds(), BLACK));
+		assertEquals(true, areaMatchesColor(resultImage, right.getBounds(), WHITE));
+	}
 
-        final int minX = bounds.x;
-        final int maxX = bounds.x + bounds.width;
-        final int minY = bounds.y;
-        final int maxY = bounds.y + bounds.height;
+	/**
+	 * Checks that the given are in the image matches the color
+	 *
+	 * @param image A 32-bit float image
+	 * @param bounds The limits of the area in the image
+	 * @param color The expected color
+	 * @return True if all the pixels in the area match the color
+	 */
+	private static boolean areaMatchesColor(final ImagePlus image,
+		final Rectangle bounds, final int color)
+	{
+		if (image == null || image.getNSlices() < 1) {
+			return false;
+		}
 
-        if (minX < 0 || minY < 0 || maxX > image.getWidth() || maxY > image.getHeight()) {
-            return false;
-        }
+		final int minX = bounds.x;
+		final int maxX = bounds.x + bounds.width;
+		final int minY = bounds.y;
+		final int maxY = bounds.y + bounds.height;
 
-        ImageStack stack = image.getStack();
+		if (minX < 0 || minY < 0 || maxX > image.getWidth() || maxY > image
+			.getHeight())
+		{
+			return false;
+		}
 
-        ImageProcessor processor;
-        for (int z = 1; z <= image.getNSlices(); z++) {
-            processor = stack.getProcessor(z);
-            for (int y = minY; y < maxY; y++) {
-                for (int x = minX; x < maxX; x++) {
-                    int pixelColor = (int)processor.getf(x, y);
-                    if (pixelColor != color) {
-                        System.out.println("(" + x + "," + y + ") " + pixelColor + " != " + color);
-                        return false;
-                    }
-                }
-            }
-        }
+		final ImageStack stack = image.getStack();
 
-        return true;
-    }
+		ImageProcessor processor;
+		for (int z = 1; z <= image.getNSlices(); z++) {
+			processor = stack.getProcessor(z);
+			for (int y = minY; y < maxY; y++) {
+				for (int x = minX; x < maxX; x++) {
+					final int pixelColor = (int) processor.getf(x, y);
+					if (pixelColor != color) {
+						System.out.println("(" + x + "," + y + ") " + pixelColor + " != " +
+							color);
+						return false;
+					}
+				}
+			}
+		}
 
-    private static ImagePlus createTestImage(String title, int width, int height, int slices, int bitDepth, int color) {
-        ImageStack stack = new ImageStack(width, height);
-        ImageProcessor processor;
+		return true;
+	}
 
-        switch (bitDepth) {
-            case 8:
-                processor = new ByteProcessor(width, height);
-                break;
-            case 32:
-                processor = new FloatProcessor(width, height);
-                break;
-            default:
-                return null;
-        }
+	private static ImagePlus createTestImage(final String title, final int width,
+		final int height, final int slices, final int bitDepth, final int color)
+	{
+		final ImageStack stack = new ImageStack(width, height);
+		ImageProcessor processor;
 
-        processor.setColor(color);
-        processor.fill();
+		switch (bitDepth) {
+			case 8:
+				processor = new ByteProcessor(width, height);
+				break;
+			case 32:
+				processor = new FloatProcessor(width, height);
+				break;
+			default:
+				return null;
+		}
 
-        for (int i = 0; i < slices; i++) {
-            stack.addSlice(processor);
-        }
+		processor.setColor(color);
+		processor.fill();
 
-        ImagePlus testImage = new ImagePlus(title, stack);
-        return  testImage;
-    }
+		for (int i = 0; i < slices; i++) {
+			stack.addSlice(processor);
+		}
+
+		final ImagePlus testImage = new ImagePlus(title, stack);
+		return testImage;
+	}
 }

@@ -1,3 +1,4 @@
+
 package sc.fiji.localThickness;
 
 import ij.IJ;
@@ -7,229 +8,248 @@ import ij.plugin.PlugIn;
 import ij.process.StackStatistics;
 
 /**
- * A class which can be used to programmatically run and control the various steps in local thickness map calculations.
- +
+ * A class which can be used to programmatically run and control the various
+ * steps in local thickness map calculations. +
+ * 
  * @author Richard Domander
  */
-public class LocalThicknessWrapper implements PlugIn
-{
-    private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
-    private static final String DEFAULT_TITLE = "ThicknessMap";
-    private static final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
-    private static final Distance_Ridge distanceRidgePlugin = new Distance_Ridge();
-    private static final Local_Thickness_Parallel localThicknessPlugin = new Local_Thickness_Parallel();
-    private static final Clean_Up_Local_Thickness thicknessCleaningPlugin = new Clean_Up_Local_Thickness();
-    private static final MaskThicknessMapWithOriginal thicknessMask = new MaskThicknessMapWithOriginal();
+public class LocalThicknessWrapper implements PlugIn {
 
-    /**
-     * A pixel is considered to be a part of the background if its color < threshold
-     */
-    public int threshold = EDT_S1D.DEFAULT_THRESHOLD;
+	private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
+	private static final String DEFAULT_TITLE = "ThicknessMap";
+	private static final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
+	private static final Distance_Ridge distanceRidgePlugin =
+		new Distance_Ridge();
+	private static final Local_Thickness_Parallel localThicknessPlugin =
+		new Local_Thickness_Parallel();
+	private static final Clean_Up_Local_Thickness thicknessCleaningPlugin =
+		new Clean_Up_Local_Thickness();
+	private static final MaskThicknessMapWithOriginal thicknessMask =
+		new MaskThicknessMapWithOriginal();
 
-    /**
-     * Inverts thresholding so that pixels with values >= threshold are considered background.
-     */
-    public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
+	/**
+	 * A pixel is considered to be a part of the background if its color <
+	 * threshold
+	 */
+	public int threshold = EDT_S1D.DEFAULT_THRESHOLD;
 
-    /**
-     * Controls whether the Thickness map gets masked with the original @see MaskThicknessMapWithOriginal
-     */
-    public boolean maskThicknessMap = true;
+	/**
+	 * Inverts thresholding so that pixels with values >= threshold are considered
+	 * background.
+	 */
+	public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
 
-    /**
-     * Controls whether the pixel values in the Thickness map get scaled @see LocalThicknessWrapper.calibratePixels()
-     */
-    public boolean calibratePixels = true;
+	/**
+	 * Controls whether the Thickness map gets masked with the original @see
+	 * MaskThicknessMapWithOriginal
+	 */
+	public boolean maskThicknessMap = true;
 
-    private ImagePlus resultImage = null;
-    private boolean showOptions = false;
-    private String titleSuffix = DEFAULT_TITLE_SUFFIX;
+	/**
+	 * Controls whether the pixel values in the Thickness map get scaled @see
+	 * LocalThicknessWrapper.calibratePixels()
+	 */
+	public boolean calibratePixels = true;
 
-    public LocalThicknessWrapper() {
-        setSilence(true);
-        geometryToDistancePlugin.showOptions = showOptions;
-    }
+	private ImagePlus resultImage = null;
+	private boolean showOptions = false;
+	private String titleSuffix = DEFAULT_TITLE_SUFFIX;
 
-    /**
-     * Controls whether the options dialog in EDT_S1D is shown to the user before processing starts.
-     *
-     * @param show  If true, then the dialog is shown.
-     */
-    public void setShowOptions(boolean show) {
-        showOptions = show;
-        geometryToDistancePlugin.showOptions = show;
-    }
+	public LocalThicknessWrapper() {
+		setSilence(true);
+		geometryToDistancePlugin.showOptions = showOptions;
+	}
 
-    /**
-     * Sets whether intermediate images are shown to the user, or only the final result
-     *
-     * @param silent If true, then no intermediate images are shown in the GUI.
-     */
-    public void setSilence(boolean silent) {
-        distanceRidgePlugin.runSilent = silent;
-        localThicknessPlugin.runSilent = silent;
-        thicknessCleaningPlugin.runSilent = silent;
-        geometryToDistancePlugin.runSilent = silent;
-    }
+	/**
+	 * Controls whether the options dialog in EDT_S1D is shown to the user before
+	 * processing starts.
+	 *
+	 * @param show If true, then the dialog is shown.
+	 */
+	public void setShowOptions(final boolean show) {
+		showOptions = show;
+		geometryToDistancePlugin.showOptions = show;
+	}
 
-    /**
-     * Creates a thickness map from the given image
-     *
-     * @param inputImage    An 8-bit binary image
-     * @return              A 32-bit floating point thickness map image
-     */
-    public ImagePlus processImage(ImagePlus inputImage) {
-        String originalTitle = Local_Thickness_Driver.stripExtension(inputImage.getTitle());
-        ImagePlus image = inputImage.duplicate();
+	/**
+	 * Sets whether intermediate images are shown to the user, or only the final
+	 * result
+	 *
+	 * @param silent If true, then no intermediate images are shown in the GUI.
+	 */
+	public void setSilence(final boolean silent) {
+		distanceRidgePlugin.runSilent = silent;
+		localThicknessPlugin.runSilent = silent;
+		thicknessCleaningPlugin.runSilent = silent;
+		geometryToDistancePlugin.runSilent = silent;
+	}
 
-        resultImage = null;
+	/**
+	 * Creates a thickness map from the given image
+	 *
+	 * @param inputImage An 8-bit binary image
+	 * @return A 32-bit floating point thickness map image
+	 */
+	public ImagePlus processImage(final ImagePlus inputImage) {
+		String originalTitle = Local_Thickness_Driver.stripExtension(inputImage
+			.getTitle());
+		final ImagePlus image = inputImage.duplicate();
 
-        if (originalTitle == null || originalTitle.isEmpty()) {
-            originalTitle = DEFAULT_TITLE;
-        }
+		resultImage = null;
 
-        geometryToDistancePlugin.setup("", image);
-        if (!showOptions) {
-            // set options programmatically
-            geometryToDistancePlugin.inverse = inverse;
-            geometryToDistancePlugin.thresh = threshold;
+		if (originalTitle == null || originalTitle.isEmpty()) {
+			originalTitle = DEFAULT_TITLE;
+		}
 
-            geometryToDistancePlugin.run(null);
-        } else {
-            // get options from the dialog in EDT_S1D
-            geometryToDistancePlugin.run(null);
+		geometryToDistancePlugin.setup("", image);
+		if (!showOptions) {
+			// set options programmatically
+			geometryToDistancePlugin.inverse = inverse;
+			geometryToDistancePlugin.thresh = threshold;
 
-            if (geometryToDistancePlugin.gotCancelled()) {
-                resultImage = null;
-                return getResultImage();
-            }
+			geometryToDistancePlugin.run(null);
+		}
+		else {
+			// get options from the dialog in EDT_S1D
+			geometryToDistancePlugin.run(null);
 
-            inverse = geometryToDistancePlugin.inverse;
-            threshold = geometryToDistancePlugin.thresh;
-        }
-        resultImage = geometryToDistancePlugin.getResultImage();
+			if (geometryToDistancePlugin.gotCancelled()) {
+				resultImage = null;
+				return getResultImage();
+			}
 
-        distanceRidgePlugin.setup("", resultImage);
-        distanceRidgePlugin.run(null);
-        resultImage = distanceRidgePlugin.getResultImage();
+			inverse = geometryToDistancePlugin.inverse;
+			threshold = geometryToDistancePlugin.thresh;
+		}
+		resultImage = geometryToDistancePlugin.getResultImage();
 
-        localThicknessPlugin.setup("", resultImage);
-        localThicknessPlugin.run(null);
-        resultImage = localThicknessPlugin.getResultImage();
+		distanceRidgePlugin.setup("", resultImage);
+		distanceRidgePlugin.run(null);
+		resultImage = distanceRidgePlugin.getResultImage();
 
-        thicknessCleaningPlugin.setup("", resultImage);
-        thicknessCleaningPlugin.run(null);
-        resultImage = thicknessCleaningPlugin.getResultImage();
+		localThicknessPlugin.setup("", resultImage);
+		localThicknessPlugin.run(null);
+		resultImage = localThicknessPlugin.getResultImage();
 
-        if (maskThicknessMap) {
-            thicknessMask.inverse = inverse;
-            thicknessMask.threshold = threshold;
-            resultImage = thicknessMask.trimOverhang(image, resultImage);
-        }
+		thicknessCleaningPlugin.setup("", resultImage);
+		thicknessCleaningPlugin.run(null);
+		resultImage = thicknessCleaningPlugin.getResultImage();
 
-        resultImage.setTitle(originalTitle + titleSuffix);
-        resultImage.copyScale(image);
+		if (maskThicknessMap) {
+			thicknessMask.inverse = inverse;
+			thicknessMask.threshold = threshold;
+			resultImage = thicknessMask.trimOverhang(image, resultImage);
+		}
 
-        if (calibratePixels) {
-            calibratePixels();
-        }
+		resultImage.setTitle(originalTitle + titleSuffix);
+		resultImage.copyScale(image);
 
-        return getResultImage();
-    }
+		if (calibratePixels) {
+			calibratePixels();
+		}
 
-    private void calibratePixels() {
-        pixelValuesToCalibratedValues();
-        backgroundToNaN(0x00);
-    }
+		return getResultImage();
+	}
 
-    /**
-     * Sets the value of the background pixels in the result image to Float.NaN. Doing this prevents them from
-     * affecting statistical measures calculated from the image, e.g. mean pixel value.
-     *
-     * @param   backgroundColor         The color used to identify background pixels (usually 0x00)
-     * @throws  NullPointerException    If this.resultImage == null
-     */
-    private void backgroundToNaN(int backgroundColor) {
-        if (resultImage == null) {
-            throw new NullPointerException("The resultImage in LocalThicknessWrapper is null");
-        }
+	private void calibratePixels() {
+		pixelValuesToCalibratedValues();
+		backgroundToNaN(0x00);
+	}
 
-        final int depth = resultImage.getNSlices();
-        final int pixelsPerSlice = resultImage.getWidth() * resultImage.getHeight();
-        final ImageStack stack = resultImage.getStack();
+	/**
+	 * Sets the value of the background pixels in the result image to Float.NaN.
+	 * Doing this prevents them from affecting statistical measures calculated
+	 * from the image, e.g. mean pixel value.
+	 *
+	 * @param backgroundColor The color used to identify background pixels
+	 *          (usually 0x00)
+	 * @throws NullPointerException If this.resultImage == null
+	 */
+	private void backgroundToNaN(final int backgroundColor) {
+		if (resultImage == null) {
+			throw new NullPointerException(
+				"The resultImage in LocalThicknessWrapper is null");
+		}
 
-        for (int z = 1; z <= depth; z++) {
-            float pixels[] = (float[]) stack.getPixels(z);
-            for (int i = 0; i < pixelsPerSlice; i++) {
-                if (Float.compare(pixels[i], backgroundColor) == 0) {
-                    pixels[i] = Float.NaN;
-                }
-            }
-        }
-    }
+		final int depth = resultImage.getNSlices();
+		final int pixelsPerSlice = resultImage.getWidth() * resultImage.getHeight();
+		final ImageStack stack = resultImage.getStack();
 
-    /**
-     * Multiplies all pixel values in the result image by pixelWidth. This ways the pixel values represent sample
-     * thickness in real units.
-     *
-     * @throws  NullPointerException    If this.resultImage == null
-     */
-    private void pixelValuesToCalibratedValues() {
-        if (resultImage == null) {
-            throw new NullPointerException("The resultImage in LocalThicknessWrapper is null");
-        }
+		for (int z = 1; z <= depth; z++) {
+			final float pixels[] = (float[]) stack.getPixels(z);
+			for (int i = 0; i < pixelsPerSlice; i++) {
+				if (Float.compare(pixels[i], backgroundColor) == 0) {
+					pixels[i] = Float.NaN;
+				}
+			}
+		}
+	}
 
-        double pixelWidth = resultImage.getCalibration().pixelWidth;
-        ImageStack stack = resultImage.getStack();
-        final int depth = stack.getSize();
+	/**
+	 * Multiplies all pixel values in the result image by pixelWidth. This ways
+	 * the pixel values represent sample thickness in real units.
+	 *
+	 * @throws NullPointerException If this.resultImage == null
+	 */
+	private void pixelValuesToCalibratedValues() {
+		if (resultImage == null) {
+			throw new NullPointerException(
+				"The resultImage in LocalThicknessWrapper is null");
+		}
 
-        for (int z = 1; z <= depth; z++) {
-            stack.getProcessor(z).multiply(pixelWidth);
-        }
+		final double pixelWidth = resultImage.getCalibration().pixelWidth;
+		final ImageStack stack = resultImage.getStack();
+		final int depth = stack.getSize();
 
-        StackStatistics stackStatistics = new StackStatistics(resultImage);
-        double maxPixelValue = stackStatistics.max;
-        resultImage.getProcessor().setMinAndMax(0, maxPixelValue);
-    }
+		for (int z = 1; z <= depth; z++) {
+			stack.getProcessor(z).multiply(pixelWidth);
+		}
 
-    /**
-     * @param imageTitleSuffix  The suffix that's added to the end of the title of the resulting thickness map image
-     */
-    public void setTitleSuffix(String imageTitleSuffix) {
-        titleSuffix = imageTitleSuffix;
+		final StackStatistics stackStatistics = new StackStatistics(resultImage);
+		final double maxPixelValue = stackStatistics.max;
+		resultImage.getProcessor().setMinAndMax(0, maxPixelValue);
+	}
 
-        if (titleSuffix == null || titleSuffix.isEmpty()) {
-            titleSuffix = DEFAULT_TITLE_SUFFIX;
-        }
+	/**
+	 * @param imageTitleSuffix The suffix that's added to the end of the title of
+	 *          the resulting thickness map image
+	 */
+	public void setTitleSuffix(final String imageTitleSuffix) {
+		titleSuffix = imageTitleSuffix;
 
-        assert titleSuffix != null && !this.titleSuffix.isEmpty();
-    }
+		if (titleSuffix == null || titleSuffix.isEmpty()) {
+			titleSuffix = DEFAULT_TITLE_SUFFIX;
+		}
 
-    /**
-     * @return  The thickness map from the last run of the plugin.
-     *          Null if something went wrong, e.g. the user cancelled the plugin.
-     */
-    public ImagePlus getResultImage() {
-        return resultImage;
-    }
+		assert titleSuffix != null && !this.titleSuffix.isEmpty();
+	}
 
-    @Override
-    public void run(String s) {
-        ImagePlus image;
+	/**
+	 * @return The thickness map from the last run of the plugin. Null if
+	 *         something went wrong, e.g. the user cancelled the plugin.
+	 */
+	public ImagePlus getResultImage() {
+		return resultImage;
+	}
 
-        try {
-            image = IJ.getImage();
-        } catch(RuntimeException rte) {
-            return; // no image currently open
-        }
+	@Override
+	public void run(final String s) {
+		ImagePlus image;
 
-        processImage(image);
+		try {
+			image = IJ.getImage();
+		}
+		catch (final RuntimeException rte) {
+			return; // no image currently open
+		}
 
-        if (resultImage == null) {
-            return;
-        }
+		processImage(image);
 
-        resultImage.show();
-        IJ.run("Fire"); // changes the color palette of the output image
-    }
+		if (resultImage == null) {
+			return;
+		}
+
+		resultImage.show();
+		IJ.run("Fire"); // changes the color palette of the output image
+	}
 }

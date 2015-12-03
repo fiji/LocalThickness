@@ -1,3 +1,4 @@
+
 package sc.fiji.localThickness;
 
 import ij.IJ;
@@ -42,61 +43,68 @@ Perform all of the steps for the local thickness calculaton
 	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-public class Local_Thickness_Driver implements  PlugInFilter {
+public class Local_Thickness_Driver implements PlugInFilter {
+
 	private ImagePlus imp;
 	public int thresh;
 	public boolean inverse;
 
-	public int setup(String arg, ImagePlus imp) {
- 		this.imp = imp;
+	@Override
+	public int setup(final String arg, final ImagePlus imp) {
+		this.imp = imp;
 		return DOES_8G;
 	}
-	public void run(ImageProcessor ip) {
-		String title = stripExtension(imp.getTitle());
+
+	@Override
+	public void run(final ImageProcessor ip) {
+		final String title = stripExtension(imp.getTitle());
 		imp.unlock();
-		if(!getScale())return;
-		if(inverse){
-			IJ.run("Geometry to Distance Map", "threshold="+thresh+" inverse");
-		}else{
-			IJ.run("Geometry to Distance Map", "threshold="+thresh);
+		if (!getScale()) return;
+		if (inverse) {
+			IJ.run("Geometry to Distance Map", "threshold=" + thresh + " inverse");
 		}
-		ImagePlus impDM = WindowManager.getCurrentImage();
+		else {
+			IJ.run("Geometry to Distance Map", "threshold=" + thresh);
+		}
+		final ImagePlus impDM = WindowManager.getCurrentImage();
 		IJ.run("Distance Map to Distance Ridge");
-		ImagePlus impDR = WindowManager.getCurrentImage();	
+		final ImagePlus impDR = WindowManager.getCurrentImage();
 		impDM.hide();
 		impDM.flush();
 		WindowManager.setTempCurrentImage(impDR);
 		IJ.run("Distance Ridge to Local Thickness");
-		ImagePlus impLT = WindowManager.getCurrentImage();
+		final ImagePlus impLT = WindowManager.getCurrentImage();
 		impDR.hide();
 		impDR.flush();
 		IJ.run("Local Thickness to Cleaned-Up Local Thickness");
-		ImagePlus impLTC = WindowManager.getCurrentImage();
+		final ImagePlus impLTC = WindowManager.getCurrentImage();
 		impLT.hide();
 		impLT.flush();
-		impLTC.setTitle(title+"_LocThk");
+		impLTC.setTitle(title + "_LocThk");
 		IJ.showProgress(1.0);
 		IJ.showStatus("Done");
 	}
-	//Modified from ImageJ code by Wayne Rasband
+
+	// Modified from ImageJ code by Wayne Rasband
 	static String stripExtension(String name) {
-        if (name!=null) {
-            int dotIndex = name.lastIndexOf(".");
-            if (dotIndex>=0)
-                name = name.substring(0, dotIndex);
+		if (name != null) {
+			final int dotIndex = name.lastIndexOf(".");
+			if (dotIndex >= 0) name = name.substring(0, dotIndex);
 		}
 		return name;
-    }
+	}
+
 	boolean getScale() {
-		thresh = (int)Prefs.get("edtS1.thresh", 128);
+		thresh = (int) Prefs.get("edtS1.thresh", 128);
 		inverse = Prefs.get("edtS1.inverse", false);
-		GenericDialog gd = new GenericDialog("EDT...", IJ.getInstance());
-		gd.addNumericField("Threshold (1 to 255; value < thresh is background)", thresh, 0);
-       	gd.addCheckbox("Inverse case (background when value >= thresh)",inverse);
+		final GenericDialog gd = new GenericDialog("EDT...", IJ.getInstance());
+		gd.addNumericField("Threshold (1 to 255; value < thresh is background)",
+			thresh, 0);
+		gd.addCheckbox("Inverse case (background when value >= thresh)", inverse);
 		gd.showDialog();
-		if (gd.wasCanceled())return false;
-		thresh = (int)gd.getNextNumber();
-      	inverse = gd.getNextBoolean();
+		if (gd.wasCanceled()) return false;
+		thresh = (int) gd.getNextNumber();
+		inverse = gd.getNextBoolean();
 		Prefs.set("edtS1.thresh", thresh);
 		Prefs.set("edtS1.inverse", inverse);
 		return true;

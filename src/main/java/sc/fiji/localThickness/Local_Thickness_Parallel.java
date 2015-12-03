@@ -1,3 +1,4 @@
+
 package sc.fiji.localThickness;
 
 import ij.IJ;
@@ -51,52 +52,57 @@ Version 3.1  Multiplies the output by 2 to conform with the definition of local 
 	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-public class Local_Thickness_Parallel implements  PlugInFilter {
+public class Local_Thickness_Parallel implements PlugInFilter {
+
 	private ImagePlus imp;
 	private ImagePlus resultImage;
 	public float[][] data;
-	public int w,h,d;
+	public int w, h, d;
 	public boolean runSilent = false;
 
-	public int setup(String arg, ImagePlus imp) {
- 		this.imp = imp;
+	@Override
+	public int setup(final String arg, final ImagePlus imp) {
+		this.imp = imp;
 		return DOES_32;
 	}
-	public void run(ImageProcessor ip) {
+
+	@Override
+	public void run(final ImageProcessor ip) {
 		resultImage = imp.duplicate();
-		ImageStack stack = resultImage.getStack();
+		final ImageStack stack = resultImage.getStack();
 
 		w = stack.getWidth();
 		h = stack.getHeight();
 		d = resultImage.getStackSize();
-		int wh = w*h;
-		//Create reference to input data
-		float[][] s = new float[d][];
-		for (int k = 0; k < d; k++)s[k] = (float[])stack.getPixels(k+1);
+		final int wh = w * h;
+		// Create reference to input data
+		final float[][] s = new float[d][];
+		for (int k = 0; k < d; k++)
+			s[k] = (float[]) stack.getPixels(k + 1);
 		float[] sk;
-		//Count the distance ridge points on each slice
-		int[] nRidge = new int[d];
-		int ind,nr,iR;
+		// Count the distance ridge points on each slice
+		final int[] nRidge = new int[d];
+		int ind, nr, iR;
 		IJ.showStatus("Local Thickness: scanning stack ");
-		for (int k = 0; k < d; k++){
+		for (int k = 0; k < d; k++) {
 			sk = s[k];
 			nr = 0;
-			for (int j = 0; j < h; j++){
-				for (int i = 0; i < w; i++){
-					ind = i + w*j;
-					if(sk[ind] > 0)nr++;
+			for (int j = 0; j < h; j++) {
+				for (int i = 0; i < w; i++) {
+					ind = i + w * j;
+					if (sk[ind] > 0) nr++;
 				}
 			}
 			nRidge[k] = nr;
 		}
-		int[][] iRidge = new int[d][];
-		int[][] jRidge = new int[d][];
-		float[][] rRidge = new float[d][];
-		//Pull out the distance ridge points
-		int[] iRidgeK,jRidgeK;
+		final int[][] iRidge = new int[d][];
+		final int[][] jRidge = new int[d][];
+		final float[][] rRidge = new float[d][];
+		// Pull out the distance ridge points
+		int[] iRidgeK, jRidgeK;
 		float[] rRidgeK;
 		float sMax = 0;
-		for (int k = 0; k < d; k++){
+		for (int k = 0; k < d; k++) {
 			nr = nRidge[k];
 			iRidge[k] = new int[nr];
 			jRidge[k] = new int[nr];
@@ -106,87 +112,89 @@ public class Local_Thickness_Parallel implements  PlugInFilter {
 			jRidgeK = jRidge[k];
 			rRidgeK = rRidge[k];
 			iR = 0;
-			for (int j = 0; j < h; j++){
-				for (int i = 0; i < w; i++){
-					ind = i + w*j;
-					if(sk[ind] > 0){;
+			for (int j = 0; j < h; j++) {
+				for (int i = 0; i < w; i++) {
+					ind = i + w * j;
+					if (sk[ind] > 0) {
+						;
 						iRidgeK[iR] = i;
 						jRidgeK[iR] = j;
 						rRidgeK[iR++] = sk[ind];
-						if(sk[ind]>sMax)sMax = sk[ind];
+						if (sk[ind] > sMax) sMax = sk[ind];
 						sk[ind] = 0;
 					}
 				}
 			}
 		}
-		int nThreads = Runtime.getRuntime().availableProcessors();
-		final Object[] resources = new Object[d];//For synchronization
-		for(int k = 0; k < d; k++){
+		final int nThreads = Runtime.getRuntime().availableProcessors();
+		final Object[] resources = new Object[d];// For synchronization
+		for (int k = 0; k < d; k++) {
 			resources[k] = new Object();
 		}
-		LTThread[] ltt = new LTThread[nThreads];
-		for(int thread = 0; thread < nThreads; thread++){
-			ltt[thread] = new LTThread(thread,nThreads,w,h,d,nRidge,
-					 				s,iRidge,jRidge,rRidge,resources);
+		final LTThread[] ltt = new LTThread[nThreads];
+		for (int thread = 0; thread < nThreads; thread++) {
+			ltt[thread] = new LTThread(thread, nThreads, w, h, d, nRidge, s, iRidge,
+				jRidge, rRidge, resources);
 			ltt[thread].start();
 		}
-		try{
-			for(int thread = 0; thread< nThreads; thread++){
+		try {
+			for (int thread = 0; thread < nThreads; thread++) {
 				ltt[thread].join();
 			}
-		}catch(InterruptedException ie){
+		}
+		catch (final InterruptedException ie) {
 			IJ.error("A thread was interrupted .");
-		}		
-		
-		
-		
-		
+		}
 
-		//Fix the square values and apply factor of 2
+		// Fix the square values and apply factor of 2
 		IJ.showStatus("Local Thickness: square root ");
-		for (int k = 0; k < d; k++){
+		for (int k = 0; k < d; k++) {
 			sk = s[k];
-			for (int j = 0; j < h; j++){
-				for (int i = 0; i < w; i++){
-					ind = i + w*j;
-					sk[ind] = (float)(2*Math.sqrt(sk[ind]));
+			for (int j = 0; j < h; j++) {
+				for (int i = 0; i < w; i++) {
+					ind = i + w * j;
+					sk[ind] = (float) (2 * Math.sqrt(sk[ind]));
 				}
 			}
 		}
 		IJ.showStatus("Local Thickness complete");
-		String title = stripExtension(imp.getTitle());
-		resultImage.setTitle(title+"_LT");
-		resultImage.getProcessor().setMinAndMax(0,sMax);
+		final String title = stripExtension(imp.getTitle());
+		resultImage.setTitle(title + "_LT");
+		resultImage.getProcessor().setMinAndMax(0, sMax);
 
 		if (!runSilent) {
 			resultImage.show();
 			IJ.run("Fire");
 		}
 	}
-	//Modified from ImageJ code by Wayne Rasband
-    String stripExtension(String name) {
-        if (name!=null) {
-            int dotIndex = name.lastIndexOf(".");
-            if (dotIndex>=0)
-                name = name.substring(0, dotIndex);
+
+	// Modified from ImageJ code by Wayne Rasband
+	String stripExtension(String name) {
+		if (name != null) {
+			final int dotIndex = name.lastIndexOf(".");
+			if (dotIndex >= 0) name = name.substring(0, dotIndex);
 		}
 		return name;
-    }
+	}
 
 	public ImagePlus getResultImage() {
 		return resultImage;
 	}
 
-	class LTThread extends Thread{
-		int thread,nThreads,w,h,d,nR;
+	class LTThread extends Thread {
+
+		int thread, nThreads, w, h, d, nR;
 		float[][] s;
 		int[] nRidge;
 		int[][] iRidge, jRidge;
 		float[][] rRidge;
 		Object[] resources;
-		public LTThread(int thread, int nThreads, int w, int h, int d, int[] nRidge,
-					float[][] s,int[][] iRidge, int[][] jRidge, float[][] rRidge,
-					Object[] resources){
+
+		public LTThread(final int thread, final int nThreads, final int w,
+			final int h, final int d, final int[] nRidge, final float[][] s,
+			final int[][] iRidge, final int[][] jRidge, final float[][] rRidge,
+			final Object[] resources)
+		{
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -199,74 +207,78 @@ public class Local_Thickness_Parallel implements  PlugInFilter {
 			this.rRidge = rRidge;
 			this.resources = resources;
 		}
-		public void run(){
-			int i,j;
-			float[] sk,sk1;
-			//Loop through ridge points.  For each one, update the local thickness for
-			//the points within its sphere.
+
+		@Override
+		public void run() {
+			int i, j;
+			final float[] sk;
+			float[] sk1;
+			// Loop through ridge points. For each one, update the local thickness for
+			// the points within its sphere.
 			float r;
-			int rInt,ind1;
-			int iStart,iStop,jStart,jStop,kStart,kStop;
-			float r1SquaredK,r1SquaredJK, r1Squared,s1;
+			int rInt, ind1;
+			int iStart, iStop, jStart, jStop, kStart, kStop;
+			float r1SquaredK, r1SquaredJK, r1Squared, s1;
 			int rSquared;
-			int[] iRidgeK,jRidgeK;
+			int[] iRidgeK, jRidgeK;
 			float[] rRidgeK;
-			for(int k = thread; k < d; k+=nThreads){
-				IJ.showStatus("Local Thickness: processing slice "+(k+1)+"/"+(d+1));
-				int nR = nRidge[k];
+			for (int k = thread; k < d; k += nThreads) {
+				IJ.showStatus("Local Thickness: processing slice " + (k + 1) + "/" +
+					(d + 1));
+				final int nR = nRidge[k];
 				iRidgeK = iRidge[k];
 				jRidgeK = jRidge[k];
 				rRidgeK = rRidge[k];
-				//sk = s[k];
-				for (int iR = 0; iR < nR; iR++){
+				// sk = s[k];
+				for (int iR = 0; iR < nR; iR++) {
 					i = iRidgeK[iR];
 					j = jRidgeK[iR];
 					r = rRidgeK[iR];
-					rSquared = (int)(r*r + 0.5f);
-					rInt = (int)r;
-					if(rInt < r)rInt++;
+					rSquared = (int) (r * r + 0.5f);
+					rInt = (int) r;
+					if (rInt < r) rInt++;
 					iStart = i - rInt;
-					if(iStart < 0)iStart = 0;
+					if (iStart < 0) iStart = 0;
 					iStop = i + rInt;
-					if(iStop >= w) iStop = w-1;
+					if (iStop >= w) iStop = w - 1;
 					jStart = j - rInt;
-					if(jStart < 0)jStart = 0;
+					if (jStart < 0) jStart = 0;
 					jStop = j + rInt;
-					if(jStop >= h) jStop = h-1;
+					if (jStop >= h) jStop = h - 1;
 					kStart = k - rInt;
-					if(kStart < 0)kStart = 0;
+					if (kStart < 0) kStart = 0;
 					kStop = k + rInt;
-					if(kStop >= d) kStop = d-1;
-					for(int k1 = kStart; k1 <= kStop; k1++){
-						r1SquaredK = (k1 - k)*(k1 - k);
+					if (kStop >= d) kStop = d - 1;
+					for (int k1 = kStart; k1 <= kStop; k1++) {
+						r1SquaredK = (k1 - k) * (k1 - k);
 						sk1 = s[k1];
-						for(int j1 = jStart; j1 <= jStop; j1++){
-							r1SquaredJK = r1SquaredK + (j1 - j)*(j1 - j);
-							if(r1SquaredJK <= rSquared){
-								for(int i1 = iStart; i1 <= iStop; i1++){
-									r1Squared = r1SquaredJK + (i1 - i)*(i1 - i);
-									if(r1Squared <= rSquared){
-										ind1 = i1 + w*j1;
+						for (int j1 = jStart; j1 <= jStop; j1++) {
+							r1SquaredJK = r1SquaredK + (j1 - j) * (j1 - j);
+							if (r1SquaredJK <= rSquared) {
+								for (int i1 = iStart; i1 <= iStop; i1++) {
+									r1Squared = r1SquaredJK + (i1 - i) * (i1 - i);
+									if (r1Squared <= rSquared) {
+										ind1 = i1 + w * j1;
 										s1 = sk1[ind1];
-										if(rSquared > s1){
-											//Get a lock on sk1 and check again to make sure
-											//that another thread has not increased
-											//sk1[ind1] to something larger than rSquared.
-											//A test shows that this may not be required...
-											synchronized(resources[k1]){
+										if (rSquared > s1) {
+											// Get a lock on sk1 and check again to make sure
+											// that another thread has not increased
+											// sk1[ind1] to something larger than rSquared.
+											// A test shows that this may not be required...
+											synchronized (resources[k1]) {
 												s1 = sk1[ind1];
-												if(rSquared > s1){
+												if (rSquared > s1) {
 													sk1[ind1] = rSquared;
 												}
 											}
 										}
-									}//if within shere of DR point
-								}//i1
-							}//if k and j components within sphere of DR point
-						}//j1
-					}//k1
-				}//iR
-			}//k
-		}//run
-	}//Step1Thread
+									} // if within shere of DR point
+								} // i1
+							} // if k and j components within sphere of DR point
+						} // j1
+					} // k1
+				} // iR
+			} // k
+		}// run
+	}// Step1Thread
 }

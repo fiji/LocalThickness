@@ -1,3 +1,4 @@
+
 package sc.fiji.localThickness;
 
 import ij.IJ;
@@ -55,7 +56,8 @@ may be forthcoming.
 	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-public class EDT_S1D implements  PlugInFilter {
+public class EDT_S1D implements PlugInFilter {
+
 	public static final int DEFAULT_THRESHOLD = 128;
 	public static final boolean DEFAULT_INVERSE = false;
 
@@ -63,100 +65,109 @@ public class EDT_S1D implements  PlugInFilter {
 	private boolean cancelled;
 
 	public byte[][] data;
-	public int w,h,d;
+	public int w, h, d;
 	public int thresh = DEFAULT_THRESHOLD;
 	public boolean inverse = DEFAULT_INVERSE;
 	public boolean showOptions = true;
 	public boolean runSilent = false;
 	private ImagePlus resultImage;
 
-	public int setup(String arg, ImagePlus imp) {
+	@Override
+	public int setup(final String arg, final ImagePlus imp) {
 		this.imp = imp;
 		return DOES_8G;
 	}
-	public void run(ImageProcessor ip) {
+
+	@Override
+	public void run(final ImageProcessor ip) {
 		resultImage = null;
 
-		ImageStack stack = imp.getStack();
+		final ImageStack stack = imp.getStack();
 		w = stack.getWidth();
 		h = stack.getHeight();
 		d = imp.getStackSize();
-		int nThreads = Runtime.getRuntime().availableProcessors();
+		final int nThreads = Runtime.getRuntime().availableProcessors();
 
 		cancelled = false;
 		if (showOptions) {
-			if(!getScale()) {
+			if (!getScale()) {
 				cancelled = true;
 				return;
 			}
 		}
 
-		//Create references to input data
+		// Create references to input data
 		data = new byte[d][];
-		for (int k = 0; k < d; k++)data[k] = (byte[])stack.getPixels(k+1);
-		//Create 32 bit floating point stack for output, s.  Will also use it for g in Transormation 1.
-		ImageStack sStack = new ImageStack(w,h);
-		float[][] s = new float[d][];
-		for(int k = 0; k < d; k++){
-			ImageProcessor ipk = new FloatProcessor(w,h);
-			sStack.addSlice(null,ipk);
-			s[k] = (float[])ipk.getPixels();
+		for (int k = 0; k < d; k++)
+			data[k] = (byte[]) stack.getPixels(k + 1);
+		// Create 32 bit floating point stack for output, s. Will also use it for g
+		// in Transormation 1.
+		final ImageStack sStack = new ImageStack(w, h);
+		final float[][] s = new float[d][];
+		for (int k = 0; k < d; k++) {
+			final ImageProcessor ipk = new FloatProcessor(w, h);
+			sStack.addSlice(null, ipk);
+			s[k] = (float[]) ipk.getPixels();
 		}
 		float[] sk;
-		//Transformation 1.  Use s to store g.
+		// Transformation 1. Use s to store g.
 		IJ.showStatus("EDT transformation 1/3");
-		Step1Thread[] s1t = new Step1Thread[nThreads];
-		for(int thread = 0; thread < nThreads; thread++){
-			s1t[thread] = new Step1Thread(thread,nThreads,w,h,d,thresh,s,data);
+		final Step1Thread[] s1t = new Step1Thread[nThreads];
+		for (int thread = 0; thread < nThreads; thread++) {
+			s1t[thread] = new Step1Thread(thread, nThreads, w, h, d, thresh, s, data);
 			s1t[thread].start();
 		}
-		try{
-			for(int thread = 0; thread< nThreads; thread++){
+		try {
+			for (int thread = 0; thread < nThreads; thread++) {
 				s1t[thread].join();
 			}
-		}catch(InterruptedException ie){
+		}
+		catch (final InterruptedException ie) {
 			IJ.error("A thread was interrupted in step 1 .");
 		}
-		//Transformation 2.  g (in s) -> h (in s)
+		// Transformation 2. g (in s) -> h (in s)
 		IJ.showStatus("EDT transformation 2/3");
-		Step2Thread[] s2t = new Step2Thread[nThreads];
-		for(int thread = 0; thread < nThreads; thread++){
-			s2t[thread] = new Step2Thread(thread,nThreads,w,h,d,s);
+		final Step2Thread[] s2t = new Step2Thread[nThreads];
+		for (int thread = 0; thread < nThreads; thread++) {
+			s2t[thread] = new Step2Thread(thread, nThreads, w, h, d, s);
 			s2t[thread].start();
 		}
-		try{
-			for(int thread = 0; thread< nThreads; thread++){
+		try {
+			for (int thread = 0; thread < nThreads; thread++) {
 				s2t[thread].join();
 			}
-		}catch(InterruptedException ie){
+		}
+		catch (final InterruptedException ie) {
 			IJ.error("A thread was interrupted in step 2 .");
 		}
-		//Transformation 3. h (in s) -> s
+		// Transformation 3. h (in s) -> s
 		IJ.showStatus("EDT transformation 3/3");
-		Step3Thread[] s3t = new Step3Thread[nThreads];
-		for(int thread = 0; thread < nThreads; thread++){
-			s3t[thread] = new Step3Thread(thread,nThreads,w,h,d,s,data);
+		final Step3Thread[] s3t = new Step3Thread[nThreads];
+		for (int thread = 0; thread < nThreads; thread++) {
+			s3t[thread] = new Step3Thread(thread, nThreads, w, h, d, s, data);
 			s3t[thread].start();
 		}
-		try{
-			for(int thread = 0; thread< nThreads; thread++){
+		try {
+			for (int thread = 0; thread < nThreads; thread++) {
 				s3t[thread].join();
 			}
-		}catch(InterruptedException ie){
+		}
+		catch (final InterruptedException ie) {
 			IJ.error("A thread was interrupted in step 3 .");
 		}
-		//Find the largest distance for scaling
-		//Also fill in the background values.
+		// Find the largest distance for scaling
+		// Also fill in the background values.
 		float distMax = 0;
-		int wh = w*h;
+		final int wh = w * h;
 		float dist;
-		for(int k = 0; k < d; k++){
+		for (int k = 0; k < d; k++) {
 			sk = s[k];
-			for(int ind = 0; ind < wh; ind++){
-				if(((data[k][ind]&255) < thresh)^inverse){
+			for (int ind = 0; ind < wh; ind++) {
+				if (((data[k][ind] & 255) < thresh) ^ inverse) {
 					sk[ind] = 0;
-				}else{
-					dist = (float)Math.sqrt(sk[ind]);
+				}
+				else {
+					dist = (float) Math.sqrt(sk[ind]);
 					sk[ind] = dist;
 					distMax = (dist > distMax) ? dist : distMax;
 				}
@@ -165,21 +176,21 @@ public class EDT_S1D implements  PlugInFilter {
 
 		IJ.showProgress(1.0);
 		IJ.showStatus("Done");
-		String title = stripExtension(imp.getTitle());
-		resultImage = new ImagePlus(title+"_EDT",sStack);
-		resultImage.getProcessor().setMinAndMax(0,distMax);
+		final String title = stripExtension(imp.getTitle());
+		resultImage = new ImagePlus(title + "_EDT", sStack);
+		resultImage.getProcessor().setMinAndMax(0, distMax);
 
-		if(!runSilent) {
+		if (!runSilent) {
 			resultImage.show();
 			IJ.run("Fire");
 		}
 	}
-	//Modified from ImageJ code by Wayne Rasband
+
+	// Modified from ImageJ code by Wayne Rasband
 	String stripExtension(String name) {
-		if (name!=null) {
-			int dotIndex = name.lastIndexOf(".");
-			if (dotIndex>=0)
-				name = name.substring(0, dotIndex);
+		if (name != null) {
+			final int dotIndex = name.lastIndexOf(".");
+			if (dotIndex >= 0) name = name.substring(0, dotIndex);
 		}
 		return name;
 	}
@@ -189,30 +200,35 @@ public class EDT_S1D implements  PlugInFilter {
 	}
 
 	boolean getScale() {
-		thresh = (int)Prefs.get("edtS1.thresh", 128);
+		thresh = (int) Prefs.get("edtS1.thresh", 128);
 		inverse = Prefs.get("edtS1.inverse", false);
-		GenericDialog gd = new GenericDialog("EDT...", IJ.getInstance());
-		gd.addNumericField("Threshold (1 to 255; value < thresh is background)", thresh, 0);
-		gd.addCheckbox("Inverse case (background when value >= thresh)",inverse);
+		final GenericDialog gd = new GenericDialog("EDT...", IJ.getInstance());
+		gd.addNumericField("Threshold (1 to 255; value < thresh is background)",
+			thresh, 0);
+		gd.addCheckbox("Inverse case (background when value >= thresh)", inverse);
 		gd.showDialog();
-		if (gd.wasCanceled())return false;
-		thresh = (int)gd.getNextNumber();
+		if (gd.wasCanceled()) return false;
+		thresh = (int) gd.getNextNumber();
 		inverse = gd.getNextBoolean();
 		Prefs.set("edtS1.thresh", thresh);
 		Prefs.set("edtS1.inverse", inverse);
 		return true;
 	}
 
-	public boolean gotCancelled()
-	{
+	public boolean gotCancelled() {
 		return cancelled;
 	}
 
-	class Step1Thread extends Thread{
-		int thread,nThreads,w,h,d,thresh;
+	class Step1Thread extends Thread {
+
+		int thread, nThreads, w, h, d, thresh;
 		float[][] s;
 		byte[][] data;
-		public Step1Thread(int thread, int nThreads, int w, int h, int d, int thresh, float[][] s,  byte[][] data){
+
+		public Step1Thread(final int thread, final int nThreads, final int w,
+			final int h, final int d, final int thresh, final float[][] s,
+			final byte[][] data)
+		{
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -222,52 +238,59 @@ public class EDT_S1D implements  PlugInFilter {
 			this.data = data;
 			this.s = s;
 		}
-		public void run(){
+
+		@Override
+		public void run() {
 			float[] sk;
 			byte[] dk;
 			int n = w;
-			if(h > n) n = h;
-			if(d > n) n = d;
-			int noResult = 3*(n+1)*(n+1);
-			boolean[] background = new boolean[n];
-			boolean nonempty;
+			if (h > n) n = h;
+			if (d > n) n = d;
+			final int noResult = 3 * (n + 1) * (n + 1);
+			final boolean[] background = new boolean[n];
+			final boolean nonempty;
 			int test, min;
-			for(int k = thread; k < d; k+=nThreads){
-				IJ.showProgress(k/(1.*d));
+			for (int k = thread; k < d; k += nThreads) {
+				IJ.showProgress(k / (1. * d));
 				sk = s[k];
 				dk = data[k];
-				for(int j = 0; j < h; j++){
-					for (int i = 0; i < w; i++){
-						background[i] = ((dk[i+w*j]&255) < thresh)^inverse;
+				for (int j = 0; j < h; j++) {
+					for (int i = 0; i < w; i++) {
+						background[i] = ((dk[i + w * j] & 255) < thresh) ^ inverse;
 					}
-					for (int i = 0; i < w; i++){
+					for (int i = 0; i < w; i++) {
 						min = noResult;
-						for (int x = i; x < w; x++){
-							if(background[x]){
+						for (int x = i; x < w; x++) {
+							if (background[x]) {
 								test = i - x;
 								test *= test;
 								min = test;
 								break;
 							}
 						}
-						for (int x = i-1; x >=0 ; x--){
-							if(background[x]){
+						for (int x = i - 1; x >= 0; x--) {
+							if (background[x]) {
 								test = i - x;
 								test *= test;
-								if(test < min)min = test;
+								if (test < min) min = test;
 								break;
 							}
 						}
-						sk[i+w*j] = min;
+						sk[i + w * j] = min;
 					}
 				}
 			}
-		}//run
-	}//Step1Thread
-	class Step2Thread extends Thread{
-		int thread,nThreads,w,h,d;
+		}// run
+	}// Step1Thread
+
+	class Step2Thread extends Thread {
+
+		int thread, nThreads, w, h, d;
 		float[][] s;
-		public Step2Thread(int thread, int nThreads, int w, int h, int d, float[][] s){
+
+		public Step2Thread(final int thread, final int nThreads, final int w,
+			final int h, final int d, final float[][] s)
+		{
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -275,48 +298,55 @@ public class EDT_S1D implements  PlugInFilter {
 			this.d = d;
 			this.s = s;
 		}
-		public void run(){
+
+		@Override
+		public void run() {
 			float[] sk;
 			int n = w;
-			if(h > n) n = h;
-			if(d > n) n = d;
-			int noResult = 3*(n+1)*(n+1);
-			int[] tempInt = new int[n];
-			int[] tempS = new int[n];
+			if (h > n) n = h;
+			if (d > n) n = d;
+			final int noResult = 3 * (n + 1) * (n + 1);
+			final int[] tempInt = new int[n];
+			final int[] tempS = new int[n];
 			boolean nonempty;
 			int test, min, delta;
-			for(int k = thread; k < d; k+=nThreads){
-				IJ.showProgress(k/(1.*d));
+			for (int k = thread; k < d; k += nThreads) {
+				IJ.showProgress(k / (1. * d));
 				sk = s[k];
-				for (int i = 0; i < w; i++){
+				for (int i = 0; i < w; i++) {
 					nonempty = false;
-					for (int j = 0; j < h; j++){
-						tempS[j] = (int)sk[i+w*j];
-						if(tempS[j] >0)nonempty = true;
+					for (int j = 0; j < h; j++) {
+						tempS[j] = (int) sk[i + w * j];
+						if (tempS[j] > 0) nonempty = true;
 					}
-					if(nonempty){
-						for (int j = 0; j < h; j++){
+					if (nonempty) {
+						for (int j = 0; j < h; j++) {
 							min = noResult;
 							delta = j;
-							for(int y = 0; y < h; y++){
-								test = tempS[y] + delta*delta--;
-								if(test < min)min = test;
+							for (int y = 0; y < h; y++) {
+								test = tempS[y] + delta * delta--;
+								if (test < min) min = test;
 							}
 							tempInt[j] = min;
 						}
-						for (int j = 0; j < h; j++){
-							sk[i+w*j] = tempInt[j];
+						for (int j = 0; j < h; j++) {
+							sk[i + w * j] = tempInt[j];
 						}
 					}
 				}
 			}
-		}//run
-	}//Step2Thread	
-	class Step3Thread extends Thread{
-		int thread,nThreads,w,h,d;
+		}// run
+	}// Step2Thread
+
+	class Step3Thread extends Thread {
+
+		int thread, nThreads, w, h, d;
 		float[][] s;
 		byte[][] data;
-		public Step3Thread(int thread, int nThreads, int w, int h, int d, float[][] s, byte[][] data){
+
+		public Step3Thread(final int thread, final int nThreads, final int w,
+			final int h, final int d, final float[][] s, final byte[][] data)
+		{
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -325,56 +355,60 @@ public class EDT_S1D implements  PlugInFilter {
 			this.s = s;
 			this.data = data;
 		}
-		public void run(){
-			int zStart,zStop,zBegin,zEnd;
-			float[] sk;
+
+		@Override
+		public void run() {
+			int zStart, zStop, zBegin, zEnd;
+			final float[] sk;
 			int n = w;
-			if(h > n) n = h;
-			if(d > n) n = d;
-			int noResult = 3*(n+1)*(n+1);
-			int[] tempInt = new int[n];
-			int[] tempS = new int[n];
+			if (h > n) n = h;
+			if (d > n) n = d;
+			final int noResult = 3 * (n + 1) * (n + 1);
+			final int[] tempInt = new int[n];
+			final int[] tempS = new int[n];
 			boolean nonempty;
 			int test, min, delta;
-			for(int j = thread; j < h; j+=nThreads){
-				IJ.showProgress(j/(1.*h));
-				for(int i = 0; i < w; i++){
+			for (int j = thread; j < h; j += nThreads) {
+				IJ.showProgress(j / (1. * h));
+				for (int i = 0; i < w; i++) {
 					nonempty = false;
-					for(int k = 0; k < d; k++){
-						tempS[k] = (int)s[k][i+w*j];
-						if(tempS[k] >0)nonempty = true;
+					for (int k = 0; k < d; k++) {
+						tempS[k] = (int) s[k][i + w * j];
+						if (tempS[k] > 0) nonempty = true;
 					}
-					if(nonempty){
+					if (nonempty) {
 						zStart = 0;
-						while((zStart < (d-1))&&(tempS[zStart] == 0))zStart++;
-						if(zStart > 0)zStart--;
-						zStop = d-1;
-						while((zStop > 0)&&(tempS[zStop] == 0))zStop--;
-						if(zStop < (d-1))zStop++;
+						while ((zStart < (d - 1)) && (tempS[zStart] == 0))
+							zStart++;
+						if (zStart > 0) zStart--;
+						zStop = d - 1;
+						while ((zStop > 0) && (tempS[zStop] == 0))
+							zStop--;
+						if (zStop < (d - 1)) zStop++;
 
-						for(int k = 0; k < d; k++){
-							//Limit to the non-background to save time,
-							if(((data[k][i+w*j]&255) >= thresh)^inverse){
+						for (int k = 0; k < d; k++) {
+							// Limit to the non-background to save time,
+							if (((data[k][i + w * j] & 255) >= thresh) ^ inverse) {
 								min = noResult;
 								zBegin = zStart;
 								zEnd = zStop;
-								if(zBegin > k)zBegin = k;
-								if(zEnd < k)zEnd = k;
+								if (zBegin > k) zBegin = k;
+								if (zEnd < k) zEnd = k;
 								delta = k - zBegin;
-								for (int z = zBegin; z <= zEnd; z++){
-									test = tempS[z] + delta*delta--;
-									if(test < min)min = test;
-									//min = (test < min) ? test : min;
+								for (int z = zBegin; z <= zEnd; z++) {
+									test = tempS[z] + delta * delta--;
+									if (test < min) min = test;
+									// min = (test < min) ? test : min;
 								}
 								tempInt[k] = min;
 							}
 						}
-						for(int k = 0; k < d; k++){
-							s[k][i+w*j] = tempInt[k];
+						for (int k = 0; k < d; k++) {
+							s[k][i + w * j] = tempInt[k];
 						}
 					}
 				}
 			}
-		}//run
-	}//Step2Thread	
+		}// run
+	}// Step2Thread
 }
