@@ -9,7 +9,7 @@ import ij.process.StackStatistics;
 /**
  * A class which can be used to programmatically run and control the various steps in local thickness map calculations.
  +
- * @author <a href="mailto:rdomander@rvc.ac.uk">Richard Domander</a>
+ * @author Richard Domander
  */
 public class LocalThicknessWrapper implements PlugIn
 {

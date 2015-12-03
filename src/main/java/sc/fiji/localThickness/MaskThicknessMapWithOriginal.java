@@ -12,7 +12,7 @@ import ij.process.ImageProcessor;
  * in the thickness map, i.e. artifacts in the map may
  * affect statistical measures of the sample.
  *
- * @author <a href="mailto:rdomander@rvc.ac.uk">Richard Domander</a>
+ * @author Richard Domander
  * @author Michael Doube
  */
 public class MaskThicknessMapWithOriginal
