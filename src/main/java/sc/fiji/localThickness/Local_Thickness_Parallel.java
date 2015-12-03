@@ -1,3 +1,5 @@
+package sc.fiji.localThickness;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -51,18 +53,22 @@ Version 3.1  Multiplies the output by 2 to conform with the definition of local 
 */
 public class Local_Thickness_Parallel implements  PlugInFilter {
 	private ImagePlus imp;
+	private ImagePlus resultImage;
 	public float[][] data;
 	public int w,h,d;
+	public boolean runSilent = false;
 
 	public int setup(String arg, ImagePlus imp) {
  		this.imp = imp;
 		return DOES_32;
 	}
 	public void run(ImageProcessor ip) {
-		ImageStack stack = imp.getStack();
+		resultImage = imp.duplicate();
+		ImageStack stack = resultImage.getStack();
+
 		w = stack.getWidth();
 		h = stack.getHeight();
-		d = imp.getStackSize();
+		d = resultImage.getStackSize();
 		int wh = w*h;
 		//Create reference to input data
 		float[][] s = new float[d][];
@@ -149,9 +155,13 @@ public class Local_Thickness_Parallel implements  PlugInFilter {
 		}
 		IJ.showStatus("Local Thickness complete");
 		String title = stripExtension(imp.getTitle());
-		imp.setTitle(title+"_LT_");
-		imp.getProcessor().setMinAndMax(0,sMax);
-		imp.updateAndDraw();
+		resultImage.setTitle(title+"_LT");
+		resultImage.getProcessor().setMinAndMax(0,sMax);
+
+		if (!runSilent) {
+			resultImage.show();
+			IJ.run("Fire");
+		}
 	}
 	//Modified from ImageJ code by Wayne Rasband
     String stripExtension(String name) {
@@ -162,6 +172,11 @@ public class Local_Thickness_Parallel implements  PlugInFilter {
 		}
 		return name;
     }
+
+	public ImagePlus getResultImage() {
+		return resultImage;
+	}
+
 	class LTThread extends Thread{
 		int thread,nThreads,w,h,d,nR;
 		float[][] s;
