@@ -21,6 +21,10 @@
 		<tag>HEAD</tag>
 		<url>https://github.com/fiji/LocalThickness</url>
 	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/fiji/LocalThickness/issues</url>
+	</issueManagement>
 	<ciManagement>
 		<system>Jenkins</system>
 		<url>http://jenkins.imagej.net/job/LocalThickness/</url>
@@ -48,5 +52,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 </project>
