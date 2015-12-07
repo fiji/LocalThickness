@@ -13,7 +13,56 @@
 	<version>4.0.0-SNAPSHOT</version>
 
 	<name>plugins/LocalThickness_.jar</name>
-	<description />
+	<description>Local Thickness is used to compute the local thickness of a 3D image stack.</description>
+	<url>http://imagej.net/Local_Thickness</url>
+	<inceptionYear>2006</inceptionYear>
+
+	<developers>
+		<developer>
+			<id>ctrueden</id>
+			<name>Curtis Rueden</name>
+			<email>ctrueden@wisc.edu</email>
+			<url>http://loci.wisc.edu/people/curtis-rueden</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<roles>
+				<role>maintainer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+		<developer>
+			<id>hinerm</id>
+			<name>Mark Hiner</name>
+			<email>hiner@wisc.edu</email>
+			<url>http://loci.wisc.edu/people/mark-hiner</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<roles>
+				<role>maintainer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Bob Dougherty</name>
+			<roles><role>founder</role></roles>
+		</contributor>
+		<contributor>
+			<name>Johannes Schindelin</name>
+			<url>http://imagej.net/User:Schindelin</url>
+			<properties><id>dscho</id></properties>
+		</contributor>
+		<contributor>
+			<name>Michael Doube</name>
+			<url>http://imagej.net/User:Michaeldoube</url>
+			<properties><id>mdoube</id></properties>
+		</contributor>
+		<contributor>
+			<name>Richard Domander</name>
+			<properties><id>rimadoma</id></properties>
+		</contributor>
+	</contributors>
 
 	<scm>
 		<connection>scm:git:git://github.com/fiji/LocalThickness</connection>
