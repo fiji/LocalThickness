@@ -232,8 +232,14 @@ public class Distance_Ridge implements PlugInFilter {
 			} // j
 		} // k
 		IJ.showStatus("Distance Ridge complete");
+
 		final String title = stripExtension(imp.getTitle());
-		resultImage = new ImagePlus(title + "_DR", newStack);
+		final int slices = imp.getNSlices();
+		final int channels = imp.getNChannels();
+		final int frames = imp.getNFrames();
+
+		resultImage = IJ.createHyperStack(title  + "_DR", w, h, channels, slices, frames, 32);
+		resultImage.setStack(newStack, channels, slices, frames);
 		resultImage.getProcessor().setMinAndMax(0, distMax);
 
 		if (!runSilent) {

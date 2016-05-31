@@ -197,8 +197,14 @@ public class EDT_S1D implements PlugInFilter {
 
 		IJ.showProgress(1.0);
 		IJ.showStatus("Done");
+
 		final String title = stripExtension(imp.getTitle());
-		resultImage = new ImagePlus(title + "_EDT", sStack);
+		final int slices = imp.getNSlices();
+		final int channels = imp.getNChannels();
+		final int frames = imp.getNFrames();
+
+		resultImage = IJ.createHyperStack(title + "_EDT", w, h, channels, slices, frames, 32);
+		resultImage.setStack(sStack, channels, slices, frames);
 		resultImage.getProcessor().setMinAndMax(0, distMax);
 
 		if (!runSilent) {

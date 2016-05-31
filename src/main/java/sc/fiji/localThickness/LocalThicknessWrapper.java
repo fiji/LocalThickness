@@ -114,15 +114,9 @@ public class LocalThicknessWrapper implements PlugIn {
 	public ImagePlus processImage(final ImagePlus inputImage) {
 		String originalTitle = Local_Thickness_Driver.stripExtension(inputImage
 			.getTitle());
-		final ImagePlus image = inputImage.duplicate();
-
 		resultImage = null;
 
-		if (originalTitle == null || originalTitle.isEmpty()) {
-			originalTitle = DEFAULT_TITLE;
-		}
-
-		geometryToDistancePlugin.setup("", image);
+		geometryToDistancePlugin.setup("", inputImage);
 		if (!showOptions) {
 			// set options programmatically
 			geometryToDistancePlugin.inverse = inverse;
@@ -159,11 +153,11 @@ public class LocalThicknessWrapper implements PlugIn {
 		if (maskThicknessMap) {
 			thicknessMask.inverse = inverse;
 			thicknessMask.threshold = threshold;
-			resultImage = thicknessMask.trimOverhang(image, resultImage);
+			resultImage = thicknessMask.trimOverhang(inputImage, resultImage);
 		}
 
 		resultImage.setTitle(originalTitle + titleSuffix);
-		resultImage.copyScale(image);
+		resultImage.copyScale(inputImage);
 
 		if (calibratePixels) {
 			calibratePixels();
@@ -241,8 +235,6 @@ public class LocalThicknessWrapper implements PlugIn {
 		if (titleSuffix == null || titleSuffix.isEmpty()) {
 			titleSuffix = DEFAULT_TITLE_SUFFIX;
 		}
-
-		assert titleSuffix != null && !this.titleSuffix.isEmpty();
 	}
 
 	/**

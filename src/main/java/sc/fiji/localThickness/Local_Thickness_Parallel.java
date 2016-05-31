@@ -179,6 +179,7 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 			}
 		}
 		IJ.showStatus("Local Thickness complete");
+
 		final String title = stripExtension(imp.getTitle());
 		resultImage.setTitle(title + "_LT");
 		resultImage.getProcessor().setMinAndMax(0, sMax);
