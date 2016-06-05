@@ -145,8 +145,14 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 			} // j
 		} // k
 		IJ.showStatus("Clean Up Local Thickness complete");
+
 		final String title = stripExtension(imp.getTitle());
-		resultImage = new ImagePlus(title + "_CL", newStack);
+		final int slices = imp.getNSlices();
+		final int channels = imp.getNChannels();
+		final int frames = imp.getNFrames();
+
+		resultImage = IJ.createHyperStack(title + "_CL", w, h, channels, slices, frames, 32);
+		resultImage.setStack(newStack, channels, slices, frames);
 		resultImage.getProcessor().setMinAndMax(0, 2 * imp.getProcessor().getMax());
 
 		if (!runSilent) {

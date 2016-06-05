@@ -90,11 +90,10 @@ public class MaskThicknessMapWithOriginal {
 				"The dimensions of the images do not match");
 		}
 
-		final ImageStack originalStack = original.getImageStack();
-
 		resultImage = thicknessMap.duplicate();
-		resultImage.setTitle(thicknessMap.getTitle()); // duplicate() adds DUP_ to
-																										// title
+		resultImage.setTitle(thicknessMap.getTitle() + "_MASK");
+
+		final ImageStack originalStack = original.getImageStack();
 		final ImageStack resultStack = resultImage.getImageStack();
 
 		ImageProcessor originalProcessor;
