@@ -51,14 +51,14 @@ public class LocalThicknessWrapper implements PlugInFilter {
 		new MaskThicknessMapWithOriginal();
 
 	/**
-	 * A pixel is considered to be a part of the background if its color <
+	 * A pixel is considered to be a part of the background if its color &lt;
 	 * threshold
 	 */
 	public int threshold = EDT_S1D.DEFAULT_THRESHOLD;
 
 	/**
-	 * Inverts thresholding so that pixels with values >= threshold are considered
-	 * background.
+	 * Inverts thresholding so that pixels with values &gt;= threshold are
+	 * considered background.
 	 */
 	public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
 
