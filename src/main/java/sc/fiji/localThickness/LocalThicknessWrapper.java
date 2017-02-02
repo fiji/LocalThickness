@@ -25,7 +25,8 @@ package sc.fiji.localThickness;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.plugin.PlugIn;
+import ij.plugin.filter.PlugInFilter;
+import ij.process.ImageProcessor;
 import ij.process.StackStatistics;
 
 /**
@@ -34,11 +35,12 @@ import ij.process.StackStatistics;
  * 
  * @author Richard Domander
  */
-public class LocalThicknessWrapper implements PlugIn {
+public class LocalThicknessWrapper implements PlugInFilter {
 
 	private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
 	private static final String DEFAULT_TITLE = "ThicknessMap";
 	private static final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
+	private ImagePlus image;
 	private static final Distance_Ridge distanceRidgePlugin =
 		new Distance_Ridge();
 	private static final Local_Thickness_Parallel localThicknessPlugin =
@@ -246,16 +248,13 @@ public class LocalThicknessWrapper implements PlugIn {
 	}
 
 	@Override
-	public void run(final String s) {
-		ImagePlus image;
+	public int setup(final String arg, final ImagePlus imp) {
+		image = imp;
+		return DOES_8G;
+	}
 
-		try {
-			image = IJ.getImage();
-		}
-		catch (final RuntimeException rte) {
-			return; // no image currently open
-		}
-
+	@Override
+	public void run(final ImageProcessor ip) {
 		processImage(image);
 
 		if (resultImage == null) {
