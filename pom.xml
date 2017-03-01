@@ -84,8 +84,8 @@
 		<url>https://github.com/fiji/LocalThickness/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/LocalThickness/</url>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/fiji/LocalThickness</url>
 	</ciManagement>
 
 	<properties>
