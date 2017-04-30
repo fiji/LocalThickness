@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>LocalThickness_</artifactId>
-	<version>4.0.2-SNAPSHOT</version>
+	<version>4.0.2</version>
 
 	<name>LocalThickness</name>
 	<description>Local Thickness is used to compute the local thickness of a 3D image stack.</description>
@@ -76,7 +76,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/fiji/LocalThickness</connection>
 		<developerConnection>scm:git:git@github.com:fiji/LocalThickness</developerConnection>
-		<tag>HEAD</tag>
+		<tag>LocalThickness_-4.0.2</tag>
 		<url>https://github.com/fiji/LocalThickness</url>
 	</scm>
 	<issueManagement>
