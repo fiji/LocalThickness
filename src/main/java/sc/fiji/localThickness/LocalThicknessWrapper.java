@@ -49,7 +49,6 @@ import ij.process.StackStatistics;
 public class LocalThicknessWrapper implements PlugInFilter {
 
 	private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
-	private static final String DEFAULT_TITLE = "ThicknessMap";
 	private final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
 	private ImagePlus image;
 	private final Distance_Ridge distanceRidgePlugin =
