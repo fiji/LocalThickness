@@ -39,15 +39,15 @@ public class LocalThicknessWrapper implements PlugInFilter {
 
 	private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
 	private static final String DEFAULT_TITLE = "ThicknessMap";
-	private static final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
+	private final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
 	private ImagePlus image;
-	private static final Distance_Ridge distanceRidgePlugin =
+	private final Distance_Ridge distanceRidgePlugin =
 		new Distance_Ridge();
-	private static final Local_Thickness_Parallel localThicknessPlugin =
+	private final Local_Thickness_Parallel localThicknessPlugin =
 		new Local_Thickness_Parallel();
-	private static final Clean_Up_Local_Thickness thicknessCleaningPlugin =
+	private final Clean_Up_Local_Thickness thicknessCleaningPlugin =
 		new Clean_Up_Local_Thickness();
-	private static final MaskThicknessMapWithOriginal thicknessMask =
+	private final MaskThicknessMapWithOriginal thicknessMask =
 		new MaskThicknessMapWithOriginal();
 
 	/**
