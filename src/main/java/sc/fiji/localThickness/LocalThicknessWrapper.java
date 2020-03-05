@@ -31,23 +31,33 @@ import ij.process.StackStatistics;
 
 /**
  * A class which can be used to programmatically run and control the various
- * steps in local thickness map calculations. +
+ * steps in local thickness map calculations.
+ * <p>
+ * This plugin overlaps with {@link Local_Thickness_Driver}. Both execute all the steps of local thickness
+ * in one go. However, this class offers more control over the execution, e.g. "running silent"
+ * which means that none of the intermediate images are shown. It also has some additional
+ * features needed by BoneJ, e.g. masking artifact pixels created by the algorithm that weren't
+ * present in the input image.
+ * </p>
+ * <p>
+ * This duplication makes the package messy, but I wanted to left the original code as is, because
+ * I don't understand it well enough to confidently alter it.
+ * </p>
  * 
  * @author Richard Domander
  */
 public class LocalThicknessWrapper implements PlugInFilter {
 
 	private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
-	private static final String DEFAULT_TITLE = "ThicknessMap";
-	private static final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
+	private final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
 	private ImagePlus image;
-	private static final Distance_Ridge distanceRidgePlugin =
+	private final Distance_Ridge distanceRidgePlugin =
 		new Distance_Ridge();
-	private static final Local_Thickness_Parallel localThicknessPlugin =
+	private final Local_Thickness_Parallel localThicknessPlugin =
 		new Local_Thickness_Parallel();
-	private static final Clean_Up_Local_Thickness thicknessCleaningPlugin =
+	private final Clean_Up_Local_Thickness thicknessCleaningPlugin =
 		new Clean_Up_Local_Thickness();
-	private static final MaskThicknessMapWithOriginal thicknessMask =
+	private final MaskThicknessMapWithOriginal thicknessMask =
 		new MaskThicknessMapWithOriginal();
 
 	/**
