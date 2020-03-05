@@ -31,7 +31,18 @@ import ij.process.StackStatistics;
 
 /**
  * A class which can be used to programmatically run and control the various
- * steps in local thickness map calculations. +
+ * steps in local thickness map calculations.
+ * <p>
+ * This plugin overlaps with {@link Local_Thickness_Driver}. Both execute all the steps of local thickness
+ * in one go. However, this class offers more control over the execution, e.g. "running silent"
+ * which means that none of the intermediate images are shown. It also has some additional
+ * features needed by BoneJ, e.g. masking artifact pixels created by the algorithm that weren't
+ * present in the input image.
+ * </p>
+ * <p>
+ * This duplication makes the package messy, but I wanted to left the original code as is, because
+ * I don't understand it well enough to confidently alter it.
+ * </p>
  * 
  * @author Richard Domander
  */
