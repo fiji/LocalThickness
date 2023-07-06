@@ -188,11 +188,11 @@ public class LocalThicknessWrapper implements PlugInFilter {
 	 * Doing this prevents them from affecting statistical measures calculated
 	 * from the image, e.g. mean pixel value.
 	 *
-	 * @param backgroundColor The color used to identify background pixels
+	 * @param backgroundValue The color used to identify background pixels
 	 *          (usually 0x00)
 	 * @throws NullPointerException If this.resultImage == null
 	 */
-	private void backgroundToNaN(final int backgroundColor) {
+	private void backgroundToNaN(final int backgroundValue) {
 		if (resultImage == null) {
 			throw new NullPointerException(
 				"The resultImage in LocalThicknessWrapper is null");
@@ -205,7 +205,7 @@ public class LocalThicknessWrapper implements PlugInFilter {
 		for (int z = 1; z <= depth; z++) {
 			final float pixels[] = (float[]) stack.getPixels(z);
 			for (int i = 0; i < pixelsPerSlice; i++) {
-				if (Float.compare(pixels[i], backgroundColor) == 0) {
+				if (Float.compare(pixels[i], backgroundValue) == 0) {
 					pixels[i] = Float.NaN;
 				}
 			}
@@ -272,6 +272,6 @@ public class LocalThicknessWrapper implements PlugInFilter {
 		}
 
 		resultImage.show();
-		IJ.run("Fire"); // changes the color palette of the output image
+		IJ.run("Fire"); // changes the lookup table of the output image
 	}
 }

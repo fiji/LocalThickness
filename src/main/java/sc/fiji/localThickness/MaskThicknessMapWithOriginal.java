@@ -39,12 +39,12 @@ import ij.process.ImageProcessor;
 public class MaskThicknessMapWithOriginal {
 
 	/**
-	 * Pixels with colors &lt; threshold are considered background
+	 * Pixels with values &lt; threshold are considered background
 	 */
 	public int threshold = EDT_S1D.DEFAULT_THRESHOLD;
 
 	/**
-	 * If true, inverts the threshold condition, i.e. color &gt;= threshold is
+	 * If true, inverts the threshold condition, i.e. value &gt;= threshold is
 	 * background
 	 */
 	public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
@@ -105,8 +105,8 @@ public class MaskThicknessMapWithOriginal {
 			resultProcessor = resultStack.getProcessor(z);
 			for (int y = 0; y < h; y++) {
 				for (int x = 0; x < w; x++) {
-					final int color = originalProcessor.get(x, y);
-					if ((color < threshold && !inverse) || (color >= threshold &&
+					final int value = originalProcessor.get(x, y);
+					if ((value < threshold && !inverse) || (value >= threshold &&
 						inverse))
 					{
 						resultProcessor.set(x, y, 0);
