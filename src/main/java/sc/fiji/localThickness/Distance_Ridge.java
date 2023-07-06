@@ -85,7 +85,6 @@ public class Distance_Ridge implements PlugInFilter {
 	private ImagePlus resultImage;
 
 	public float[][] data;
-	public int w, h, d;
 	public boolean runSilent = false;
 
 	@Override
@@ -99,9 +98,9 @@ public class Distance_Ridge implements PlugInFilter {
 		resultImage = null;
 
 		final ImageStack stack = imp.getStack();
-		w = stack.getWidth();
-		h = stack.getHeight();
-		d = imp.getStackSize();
+		final int w = stack.getWidth();
+		final int h = stack.getHeight();
+		final int d = imp.getStackSize();
 		// Create 32 bit floating point stack for output, s. Will also use it for g
 		// in Transormation 1.
 		final ImageStack newStack = new ImageStack(w, h);
@@ -127,9 +126,11 @@ public class Distance_Ridge implements PlugInFilter {
 		for (int k = 0; k < d; k++) {
 			sk = s[k];
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					final int ind = i + w * j;
-					if (sk[ind] > distMax) distMax = sk[ind];
+					final int ind = i + wj;
+					final float skind = sk[ind];
+					if (skind > distMax) distMax = skind;
 				}
 			}
 		}
@@ -140,9 +141,11 @@ public class Distance_Ridge implements PlugInFilter {
 		for (int k = 0; k < d; k++) {
 			sk = s[k];
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					final int ind = i + w * j;
-					occurs[(int) (sk[ind] * sk[ind] + 0.5f)] = true;
+					final int ind = i + wj;
+					final float skind = sk[ind];
+					occurs[(int) (skind * skind + 0.5f)] = true;
 				}
 			}
 		}
@@ -176,11 +179,13 @@ public class Distance_Ridge implements PlugInFilter {
 			sk = s[k];
 			skNew = sNew[k];
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					final int ind = i + w * j;
-					if (sk[ind] > 0) {
+					final int ind = i + wj;
+					final float skind = sk[ind];
+					if (skind > 0) {
 						notRidgePoint = false;
-						sk0Sq = (int) (sk[ind] * sk[ind] + 0.5f);
+						sk0Sq = (int) (skind * skind + 0.5f);
 						sk0SqInd = distSqIndex[sk0Sq];
 						for (dz = -1; dz <= 1; dz++) {
 							k1 = k + dz;
@@ -194,6 +199,7 @@ public class Distance_Ridge implements PlugInFilter {
 								}
 								for (dy = -1; dy <= 1; dy++) {
 									j1 = j + dy;
+									final int wj1 = w * j1;
 									if ((j1 >= 0) && (j1 < h)) {
 										if (dy == 0) {
 											numCompY = 0;
@@ -212,8 +218,8 @@ public class Distance_Ridge implements PlugInFilter {
 												}
 												numComp = numCompX + numCompY + numCompZ;
 												if (numComp > 0) {
-													sk1Sq = (int) (sk1[i1 + w * j1] * sk1[i1 + w * j1] +
-														0.5f);
+													final float sk1i1wj1 = sk1[i1 + wj1]; 
+													sk1Sq = (int) (sk1i1wj1 * sk1i1wj1 + 0.5f);
 													if (sk1Sq >= rSqTemplate[numComp - 1][sk0SqInd])
 														notRidgePoint = true;
 												}
@@ -285,17 +291,14 @@ public class Distance_Ridge implements PlugInFilter {
 				final int rSq = distSqValues[rSqInd];
 				int max = 0;
 				final int r = 1 + (int) Math.sqrt(rSq);
-				int scank, scankj;
 				int dk, dkji;
-				final int iBall;
-				int iPlus;
 				for (int k = 0; k <= r; k++) {
-					scank = k * k;
+					final int scank = k * k;
 					dk = (k - dzAbs) * (k - dzAbs);
 					for (int j = 0; j <= r; j++) {
-						scankj = scank + j * j;
+						final int scankj = scank + j * j;
 						if (scankj <= rSq) {
-							iPlus = ((int) Math.sqrt(rSq - scankj)) - dxAbs;
+							final int iPlus = ((int) Math.sqrt(rSq - scankj)) - dxAbs;
 							dkji = dk + (j - dyAbs) * (j - dyAbs) + iPlus * iPlus;
 							if (dkji > max) max = dkji;
 						}

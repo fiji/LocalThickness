@@ -75,7 +75,6 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 	private ImagePlus resultImage;
 
 	public float[][] s, sNew;
-	public int w, h, d;
 	public boolean runSilent = false;
 
 	@Override
@@ -89,9 +88,10 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 		resultImage = null;
 
 		final ImageStack stack = imp.getStack();
-		w = stack.getWidth();
-		h = stack.getHeight();
-		d = imp.getStackSize();
+		final int w = stack.getWidth();
+		final int h = stack.getHeight();
+		final int d = imp.getStackSize();
+		
 		// Create 32 bit floating point stack for output, sNew.
 		final ImageStack newStack = new ImageStack(w, h);
 		sNew = new float[d][];
@@ -110,8 +110,9 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 		// s (input data) for an interior non-background point
 		for (int k = 0; k < d; k++) {
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					sNew[k][i + w * j] = setFlag(i, j, k);
+					sNew[k][i + wj] = setFlag(i, j, k, w, h, d);
 				} // i
 			} // j
 		} // k
@@ -127,10 +128,11 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 			// the averaging.
 		for (int k = 0; k < d; k++) {
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					final int ind = i + w * j;
+					final int ind = i + wj;
 					if (sNew[k][ind] == -1) {
-						sNew[k][ind] = -averageInteriorNeighbors(i, j, k);
+						sNew[k][ind] = -averageInteriorNeighbors(i, j, k, w, h, d);
 					}
 				} // i
 			} // j
@@ -138,8 +140,9 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 			// Fix the negative values and double the results
 		for (int k = 0; k < d; k++) {
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					final int ind = i + w * j;
+					final int ind = i + wj;
 					sNew[k][ind] = Math.abs(sNew[k][ind]);
 				} // i
 			} // j
@@ -161,176 +164,176 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 		}
 	}
 
-	float setFlag(final int i, final int j, final int k) {
+	float setFlag(final int i, final int j, final int k, final int w, final int h, final int d) {
 		if (s[k][i + w * j] == 0) return 0;
 		// change 1
-		if (look(i, j, k - 1) == 0) return -1;
-		if (look(i, j, k + 1) == 0) return -1;
-		if (look(i, j - 1, k) == 0) return -1;
-		if (look(i, j + 1, k) == 0) return -1;
-		if (look(i - 1, j, k) == 0) return -1;
-		if (look(i + 1, j, k) == 0) return -1;
+		if (look(i, j, k - 1, w, h, d) == 0) return -1;
+		if (look(i, j, k + 1, w, h, d) == 0) return -1;
+		if (look(i, j - 1, k, w, h, d) == 0) return -1;
+		if (look(i, j + 1, k, w, h, d) == 0) return -1;
+		if (look(i - 1, j, k, w, h, d) == 0) return -1;
+		if (look(i + 1, j, k, w, h, d) == 0) return -1;
 		// change 1 before plus
-		if (look(i, j + 1, k - 1) == 0) return -1;
-		if (look(i, j + 1, k + 1) == 0) return -1;
-		if (look(i + 1, j - 1, k) == 0) return -1;
-		if (look(i + 1, j + 1, k) == 0) return -1;
-		if (look(i - 1, j, k + 1) == 0) return -1;
-		if (look(i + 1, j, k + 1) == 0) return -1;
+		if (look(i, j + 1, k - 1, w, h, d) == 0) return -1;
+		if (look(i, j + 1, k + 1, w, h, d) == 0) return -1;
+		if (look(i + 1, j - 1, k, w, h, d) == 0) return -1;
+		if (look(i + 1, j + 1, k, w, h, d) == 0) return -1;
+		if (look(i - 1, j, k + 1, w, h, d) == 0) return -1;
+		if (look(i + 1, j, k + 1, w, h, d) == 0) return -1;
 		// change 1 before minus
-		if (look(i, j - 1, k - 1) == 0) return -1;
-		if (look(i, j - 1, k + 1) == 0) return -1;
-		if (look(i - 1, j - 1, k) == 0) return -1;
-		if (look(i - 1, j + 1, k) == 0) return -1;
-		if (look(i - 1, j, k - 1) == 0) return -1;
-		if (look(i + 1, j, k - 1) == 0) return -1;
+		if (look(i, j - 1, k - 1, w, h, d) == 0) return -1;
+		if (look(i, j - 1, k + 1, w, h, d) == 0) return -1;
+		if (look(i - 1, j - 1, k, w, h, d) == 0) return -1;
+		if (look(i - 1, j + 1, k, w, h, d) == 0) return -1;
+		if (look(i - 1, j, k - 1, w, h, d) == 0) return -1;
+		if (look(i + 1, j, k - 1, w, h, d) == 0) return -1;
 		// change 3, k+1
-		if (look(i + 1, j + 1, k + 1) == 0) return -1;
-		if (look(i + 1, j - 1, k + 1) == 0) return -1;
-		if (look(i - 1, j + 1, k + 1) == 0) return -1;
-		if (look(i - 1, j - 1, k + 1) == 0) return -1;
+		if (look(i + 1, j + 1, k + 1, w, h, d) == 0) return -1;
+		if (look(i + 1, j - 1, k + 1, w, h, d) == 0) return -1;
+		if (look(i - 1, j + 1, k + 1, w, h, d) == 0) return -1;
+		if (look(i - 1, j - 1, k + 1, w, h, d) == 0) return -1;
 		// change 3, k-1
-		if (look(i + 1, j + 1, k - 1) == 0) return -1;
-		if (look(i + 1, j - 1, k - 1) == 0) return -1;
-		if (look(i - 1, j + 1, k - 1) == 0) return -1;
-		if (look(i - 1, j - 1, k - 1) == 0) return -1;
+		if (look(i + 1, j + 1, k - 1, w, h, d) == 0) return -1;
+		if (look(i + 1, j - 1, k - 1, w, h, d) == 0) return -1;
+		if (look(i - 1, j + 1, k - 1, w, h, d) == 0) return -1;
+		if (look(i - 1, j - 1, k - 1, w, h, d) == 0) return -1;
 		return s[k][i + w * j];
 	}
 
-	float averageInteriorNeighbors(final int i, final int j, final int k) {
+	float averageInteriorNeighbors(final int i, final int j, final int k, final int w, final int h, final int d) {
 		int n = 0;
 		float sum = 0;
 		// change 1
-		float value = lookNew(i, j, k - 1);
+		float value = lookNew(i, j, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i, j, k + 1);
+		value = lookNew(i, j, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i, j - 1, k);
+		value = lookNew(i, j - 1, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i, j + 1, k);
+		value = lookNew(i, j + 1, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j, k);
+		value = lookNew(i - 1, j, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j, k);
+		value = lookNew(i + 1, j, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
 		// change 1 before plus
-		value = lookNew(i, j + 1, k - 1);
+		value = lookNew(i, j + 1, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i, j + 1, k + 1);
+		value = lookNew(i, j + 1, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j - 1, k);
+		value = lookNew(i + 1, j - 1, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j + 1, k);
+		value = lookNew(i + 1, j + 1, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j, k + 1);
+		value = lookNew(i - 1, j, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j, k + 1);
+		value = lookNew(i + 1, j, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
 		// change 1 before minus
-		value = lookNew(i, j - 1, k - 1);
+		value = lookNew(i, j - 1, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i, j - 1, k + 1);
+		value = lookNew(i, j - 1, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j - 1, k);
+		value = lookNew(i - 1, j - 1, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j + 1, k);
+		value = lookNew(i - 1, j + 1, k, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j, k - 1);
+		value = lookNew(i - 1, j, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j, k - 1);
+		value = lookNew(i + 1, j, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
 		// change 3, k+1
-		value = lookNew(i + 1, j + 1, k + 1);
+		value = lookNew(i + 1, j + 1, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j - 1, k + 1);
+		value = lookNew(i + 1, j - 1, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j + 1, k + 1);
+		value = lookNew(i - 1, j + 1, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j - 1, k + 1);
+		value = lookNew(i - 1, j - 1, k + 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
 		// change 3, k-1
-		value = lookNew(i + 1, j + 1, k - 1);
+		value = lookNew(i + 1, j + 1, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i + 1, j - 1, k - 1);
+		value = lookNew(i + 1, j - 1, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j + 1, k - 1);
+		value = lookNew(i - 1, j + 1, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
 		}
-		value = lookNew(i - 1, j - 1, k - 1);
+		value = lookNew(i - 1, j - 1, k - 1, w, h, d);
 		if (value > 0) {
 			n++;
 			sum += value;
@@ -339,7 +342,7 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 		return s[k][i + w * j];
 	}
 
-	float look(final int i, final int j, final int k) {
+	float look(final int i, final int j, final int k, final int w, final int h, final int d) {
 		if ((i < 0) || (i >= w)) return -1;
 		if ((j < 0) || (j >= h)) return -1;
 		if ((k < 0) || (k >= d)) return -1;
@@ -347,7 +350,7 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 	}
 
 	// A positive result means this is an interior, non-background, point.
-	float lookNew(final int i, final int j, final int k) {
+	float lookNew(final int i, final int j, final int k, final int w, final int h, final int d) {
 		if ((i < 0) || (i >= w)) return -1;
 		if ((j < 0) || (j >= h)) return -1;
 		if ((k < 0) || (k >= d)) return -1;
