@@ -439,4 +439,13 @@ public class EDT_S1D implements PlugInFilter {
 			}
 		}// run
 	}// Step2Thread
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		data = null;
+		resultImage = null;
+		imp = null;
+	}
 }

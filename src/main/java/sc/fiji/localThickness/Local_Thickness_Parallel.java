@@ -290,7 +290,7 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 											// sk1[ind1] to something larger than rSquared.
 											// A test shows that this may not be required...
 											synchronized (resources[k1]) {
-												s1 = sk1[ind1];
+												s1 = sk1[ind1];//TODO check that this line is required, s1 is already assigned.
 												if (rSquared > s1) {
 													sk1[ind1] = rSquared;
 												}
@@ -305,4 +305,13 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 			} // k
 		}// run
 	}// Step1Thread
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		data = null;
+		resultImage = null;
+		imp = null;
+	}
 }

@@ -369,4 +369,14 @@ public class Clean_Up_Local_Thickness implements PlugInFilter {
 	public ImagePlus getResultImage() {
 		return resultImage;
 	}
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		s = null;
+		sNew = null;
+		resultImage = null;
+		imp = null;
+	}
 }

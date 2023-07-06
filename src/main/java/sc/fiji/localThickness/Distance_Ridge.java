@@ -321,4 +321,13 @@ public class Distance_Ridge implements PlugInFilter {
 	public ImagePlus getResultImage() {
 		return resultImage;
 	}
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		data = null;
+		resultImage = null;
+		imp = null;
+	}
 }

@@ -125,4 +125,11 @@ public class MaskThicknessMapWithOriginal {
 	public ImagePlus getResultImage() {
 		return resultImage;
 	}
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		resultImage = null;
+	}
 }
