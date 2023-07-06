@@ -22,6 +22,8 @@
 
 package sc.fiji.localThickness;
 
+import java.util.ArrayList;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -95,14 +97,15 @@ public class MaskThicknessMapWithOriginal {
 
 		final ImageStack originalStack = original.getImageStack();
 		final ImageStack resultStack = resultImage.getImageStack();
-
-		ImageProcessor originalProcessor;
-		ImageProcessor resultProcessor;
+		
+		ArrayList<Integer> sliceNumbers = new ArrayList<>();
 		for (int z = 1; z <= d; z++) {
+			sliceNumbers.add(z);
+		}
+		sliceNumbers.parallelStream().forEach(z -> {
 			IJ.showStatus("Masking thickness map...");
-			IJ.showProgress(z, d);
-			originalProcessor = originalStack.getProcessor(z);
-			resultProcessor = resultStack.getProcessor(z);
+			ImageProcessor originalProcessor = originalStack.getProcessor(z);
+			ImageProcessor resultProcessor = resultStack.getProcessor(z);
 			for (int y = 0; y < h; y++) {
 				for (int x = 0; x < w; x++) {
 					final int value = originalProcessor.get(x, y);
@@ -113,7 +116,7 @@ public class MaskThicknessMapWithOriginal {
 					}
 				}
 			}
-		}
+		});
 
 		return getResultImage();
 	}
