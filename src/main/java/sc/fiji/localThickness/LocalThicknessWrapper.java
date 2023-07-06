@@ -247,7 +247,7 @@ public class LocalThicknessWrapper implements PlugInFilter {
 
 		double[] sliceMax = new double[depth];
 		sliceNumbers.parallelStream().forEach(z -> {
-			sliceMax[z] = stack.getProcessor(z).getMax();
+			sliceMax[z - 1] = stack.getProcessor(z).getMax();
 		});
 		
 		final double maxPixelValue = Arrays.stream(sliceMax).max().getAsDouble();
