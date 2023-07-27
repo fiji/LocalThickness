@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>LocalThickness_</artifactId>
-	<version>5.0.0-SNAPSHOT</version>
+	<version>5.0.1-SNAPSHOT</version>
 
 	<name>LocalThickness</name>
 	<description>Local Thickness is used to compute the local thickness of a 3D image stack.</description>
