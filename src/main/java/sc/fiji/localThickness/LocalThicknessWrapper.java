@@ -27,7 +27,9 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import ij.process.StackStatistics;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A class which can be used to programmatically run and control the various
@@ -49,19 +51,19 @@ import ij.process.StackStatistics;
 public class LocalThicknessWrapper implements PlugInFilter {
 
 	private static final String DEFAULT_TITLE_SUFFIX = "_LocThk";
-	private final EDT_S1D geometryToDistancePlugin = new EDT_S1D();
+	private EDT_S1D geometryToDistancePlugin = new EDT_S1D();
 	private ImagePlus image;
-	private final Distance_Ridge distanceRidgePlugin =
+	private Distance_Ridge distanceRidgePlugin =
 		new Distance_Ridge();
-	private final Local_Thickness_Parallel localThicknessPlugin =
+	private Local_Thickness_Parallel localThicknessPlugin =
 		new Local_Thickness_Parallel();
-	private final Clean_Up_Local_Thickness thicknessCleaningPlugin =
+	private Clean_Up_Local_Thickness thicknessCleaningPlugin =
 		new Clean_Up_Local_Thickness();
-	private final MaskThicknessMapWithOriginal thicknessMask =
+	private MaskThicknessMapWithOriginal thicknessMask =
 		new MaskThicknessMapWithOriginal();
 
 	/**
-	 * A pixel is considered to be a part of the background if its color &lt;
+	 * A pixel is considered to be a part of the background if its value &lt;
 	 * threshold
 	 */
 	public int threshold = EDT_S1D.DEFAULT_THRESHOLD;
@@ -133,7 +135,6 @@ public class LocalThicknessWrapper implements PlugInFilter {
 			// set options programmatically
 			geometryToDistancePlugin.inverse = inverse;
 			geometryToDistancePlugin.thresh = threshold;
-
 			geometryToDistancePlugin.run(null);
 		}
 		else {
@@ -149,23 +150,28 @@ public class LocalThicknessWrapper implements PlugInFilter {
 			threshold = geometryToDistancePlugin.thresh;
 		}
 		resultImage = geometryToDistancePlugin.getResultImage();
+		geometryToDistancePlugin.purge();
 
 		distanceRidgePlugin.setup("", resultImage);
 		distanceRidgePlugin.run(null);
 		resultImage = distanceRidgePlugin.getResultImage();
+		distanceRidgePlugin.purge();
 
 		localThicknessPlugin.setup("", resultImage);
 		localThicknessPlugin.run(null);
 		resultImage = localThicknessPlugin.getResultImage();
+		localThicknessPlugin.purge();
 
 		thicknessCleaningPlugin.setup("", resultImage);
 		thicknessCleaningPlugin.run(null);
 		resultImage = thicknessCleaningPlugin.getResultImage();
+		thicknessCleaningPlugin.purge();
 
 		if (maskThicknessMap) {
 			thicknessMask.inverse = inverse;
 			thicknessMask.threshold = threshold;
 			resultImage = thicknessMask.trimOverhang(inputImage, resultImage);
+			thicknessMask.purge();
 		}
 
 		resultImage.setTitle(originalTitle + titleSuffix);
@@ -188,11 +194,11 @@ public class LocalThicknessWrapper implements PlugInFilter {
 	 * Doing this prevents them from affecting statistical measures calculated
 	 * from the image, e.g. mean pixel value.
 	 *
-	 * @param backgroundColor The color used to identify background pixels
+	 * @param backgroundValue The value used to identify background pixels
 	 *          (usually 0x00)
 	 * @throws NullPointerException If this.resultImage == null
 	 */
-	private void backgroundToNaN(final int backgroundColor) {
+	private void backgroundToNaN(final int backgroundValue) {
 		if (resultImage == null) {
 			throw new NullPointerException(
 				"The resultImage in LocalThicknessWrapper is null");
@@ -202,14 +208,18 @@ public class LocalThicknessWrapper implements PlugInFilter {
 		final int pixelsPerSlice = resultImage.getWidth() * resultImage.getHeight();
 		final ImageStack stack = resultImage.getStack();
 
+		ArrayList<Integer> sliceNumbers = new ArrayList<>();
 		for (int z = 1; z <= depth; z++) {
-			final float pixels[] = (float[]) stack.getPixels(z);
-			for (int i = 0; i < pixelsPerSlice; i++) {
-				if (Float.compare(pixels[i], backgroundColor) == 0) {
-					pixels[i] = Float.NaN;
-				}
-			}
+			sliceNumbers.add(z);
 		}
+		sliceNumbers.parallelStream().forEach(z -> {
+				final float pixels[] = (float[]) stack.getPixels(z);
+				for (int i = 0; i < pixelsPerSlice; i++) {
+					if (pixels[i] == backgroundValue) {
+						pixels[i] = Float.NaN;
+					}
+				}
+			});
 	}
 
 	/**
@@ -228,12 +238,20 @@ public class LocalThicknessWrapper implements PlugInFilter {
 		final ImageStack stack = resultImage.getStack();
 		final int depth = stack.getSize();
 
+		ArrayList<Integer> sliceNumbers = new ArrayList<>();
 		for (int z = 1; z <= depth; z++) {
-			stack.getProcessor(z).multiply(pixelWidth);
+			sliceNumbers.add(z);
 		}
+		
+		sliceNumbers.parallelStream().forEach(z -> stack.getProcessor(z).multiply(pixelWidth));
 
-		final StackStatistics stackStatistics = new StackStatistics(resultImage);
-		final double maxPixelValue = stackStatistics.max;
+		double[] sliceMax = new double[depth];
+		sliceNumbers.parallelStream().forEach(z -> {
+			sliceMax[z - 1] = stack.getProcessor(z).getMax();
+		});
+		
+		final double maxPixelValue = Arrays.stream(sliceMax).max().getAsDouble();
+		
 		resultImage.getProcessor().setMinAndMax(0, maxPixelValue);
 	}
 
@@ -272,6 +290,6 @@ public class LocalThicknessWrapper implements PlugInFilter {
 		}
 
 		resultImage.show();
-		IJ.run("Fire"); // changes the color palette of the output image
+		IJ.run("Fire"); // changes the lookup table of the output image
 	}
 }

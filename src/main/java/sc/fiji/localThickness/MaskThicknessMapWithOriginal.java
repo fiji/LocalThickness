@@ -22,6 +22,8 @@
 
 package sc.fiji.localThickness;
 
+import java.util.ArrayList;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -39,12 +41,12 @@ import ij.process.ImageProcessor;
 public class MaskThicknessMapWithOriginal {
 
 	/**
-	 * Pixels with colors &lt; threshold are considered background
+	 * Pixels with values &lt; threshold are considered background
 	 */
 	public int threshold = EDT_S1D.DEFAULT_THRESHOLD;
 
 	/**
-	 * If true, inverts the threshold condition, i.e. color &gt;= threshold is
+	 * If true, inverts the threshold condition, i.e. value &gt;= threshold is
 	 * background
 	 */
 	public boolean inverse = EDT_S1D.DEFAULT_INVERSE;
@@ -95,25 +97,26 @@ public class MaskThicknessMapWithOriginal {
 
 		final ImageStack originalStack = original.getImageStack();
 		final ImageStack resultStack = resultImage.getImageStack();
-
-		ImageProcessor originalProcessor;
-		ImageProcessor resultProcessor;
+		
+		ArrayList<Integer> sliceNumbers = new ArrayList<>();
 		for (int z = 1; z <= d; z++) {
+			sliceNumbers.add(z);
+		}
+		sliceNumbers.parallelStream().forEach(z -> {
 			IJ.showStatus("Masking thickness map...");
-			IJ.showProgress(z, d);
-			originalProcessor = originalStack.getProcessor(z);
-			resultProcessor = resultStack.getProcessor(z);
+			ImageProcessor originalProcessor = originalStack.getProcessor(z);
+			ImageProcessor resultProcessor = resultStack.getProcessor(z);
 			for (int y = 0; y < h; y++) {
 				for (int x = 0; x < w; x++) {
-					final int color = originalProcessor.get(x, y);
-					if ((color < threshold && !inverse) || (color >= threshold &&
+					final int value = originalProcessor.get(x, y);
+					if ((value < threshold && !inverse) || (value >= threshold &&
 						inverse))
 					{
 						resultProcessor.set(x, y, 0);
 					}
 				}
 			}
-		}
+		});
 
 		return getResultImage();
 	}
@@ -124,5 +127,12 @@ public class MaskThicknessMapWithOriginal {
 	 */
 	public ImagePlus getResultImage() {
 		return resultImage;
+	}
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		resultImage = null;
 	}
 }

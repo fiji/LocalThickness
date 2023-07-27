@@ -78,7 +78,6 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 	private ImagePlus imp;
 	private ImagePlus resultImage;
 	public float[][] data;
-	public int w, h, d;
 	public boolean runSilent = false;
 
 	@Override
@@ -92,10 +91,10 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 		resultImage = imp.duplicate();
 		final ImageStack stack = resultImage.getStack();
 
-		w = stack.getWidth();
-		h = stack.getHeight();
-		d = resultImage.getStackSize();
-		final int wh = w * h;
+		final int w = stack.getWidth();
+		final int h = stack.getHeight();
+		final int d = resultImage.getStackSize();
+	
 		// Create reference to input data
 		final float[][] s = new float[d][];
 		for (int k = 0; k < d; k++)
@@ -109,8 +108,9 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 			sk = s[k];
 			nr = 0;
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					ind = i + w * j;
+					ind = i + wj;
 					if (sk[ind] > 0) nr++;
 				}
 			}
@@ -134,14 +134,15 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 			rRidgeK = rRidge[k];
 			iR = 0;
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					ind = i + w * j;
-					if (sk[ind] > 0) {
-						;
+					ind = i + wj;
+					final float skind = sk[ind];
+					if (skind > 0) {
 						iRidgeK[iR] = i;
 						jRidgeK[iR] = j;
-						rRidgeK[iR++] = sk[ind];
-						if (sk[ind] > sMax) sMax = sk[ind];
+						rRidgeK[iR++] = skind;
+						if (skind > sMax) sMax = skind;
 						sk[ind] = 0;
 					}
 				}
@@ -172,8 +173,9 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 		for (int k = 0; k < d; k++) {
 			sk = s[k];
 			for (int j = 0; j < h; j++) {
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
-					ind = i + w * j;
+					ind = i + wj;
 					sk[ind] = (float) (2 * Math.sqrt(sk[ind]));
 				}
 			}
@@ -205,7 +207,7 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 
 	class LTThread extends Thread {
 
-		int thread, nThreads, w, h, d, nR;
+		int thread, nThreads, w, h, d;
 		float[][] s;
 		int[] nRidge;
 		int[][] iRidge, jRidge;
@@ -233,7 +235,6 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 		@Override
 		public void run() {
 			int i, j;
-			final float[] sk;
 			float[] sk1;
 			// Loop through ridge points. For each one, update the local thickness for
 			// the points within its sphere.
@@ -276,11 +277,12 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 						sk1 = s[k1];
 						for (int j1 = jStart; j1 <= jStop; j1++) {
 							r1SquaredJK = r1SquaredK + (j1 - j) * (j1 - j);
+							final int wj1 = w * j1;
 							if (r1SquaredJK <= rSquared) {
 								for (int i1 = iStart; i1 <= iStop; i1++) {
 									r1Squared = r1SquaredJK + (i1 - i) * (i1 - i);
 									if (r1Squared <= rSquared) {
-										ind1 = i1 + w * j1;
+										ind1 = i1 + wj1;
 										s1 = sk1[ind1];
 										if (rSquared > s1) {
 											// Get a lock on sk1 and check again to make sure
@@ -288,7 +290,7 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 											// sk1[ind1] to something larger than rSquared.
 											// A test shows that this may not be required...
 											synchronized (resources[k1]) {
-												s1 = sk1[ind1];
+												s1 = sk1[ind1];//TODO check that this line is required, s1 is already assigned.
 												if (rSquared > s1) {
 													sk1[ind1] = rSquared;
 												}
@@ -303,4 +305,13 @@ public class Local_Thickness_Parallel implements PlugInFilter {
 			} // k
 		}// run
 	}// Step1Thread
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		data = null;
+		resultImage = null;
+		imp = null;
+	}
 }

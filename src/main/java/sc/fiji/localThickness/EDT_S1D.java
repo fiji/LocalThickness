@@ -86,7 +86,6 @@ public class EDT_S1D implements PlugInFilter {
 	private boolean cancelled;
 
 	public byte[][] data;
-	public int w, h, d;
 	public int thresh = DEFAULT_THRESHOLD;
 	public boolean inverse = DEFAULT_INVERSE;
 	public boolean showOptions = true;
@@ -104,9 +103,9 @@ public class EDT_S1D implements PlugInFilter {
 		resultImage = null;
 
 		final ImageStack stack = imp.getStack();
-		w = stack.getWidth();
-		h = stack.getHeight();
-		d = imp.getStackSize();
+		final int w = stack.getWidth();
+		final int h = stack.getHeight();
+		final int d = imp.getStackSize();
 		final int nThreads = Runtime.getRuntime().availableProcessors();
 
 		cancelled = false;
@@ -282,8 +281,9 @@ public class EDT_S1D implements PlugInFilter {
 				sk = s[k];
 				dk = data[k];
 				for (int j = 0; j < h; j++) {
+					final int wj = w * j;
 					for (int i = 0; i < w; i++) {
-						background[i] = ((dk[i + w * j] & 255) < thresh) ^ inverse;
+						background[i] = ((dk[i + wj] & 255) < thresh) ^ inverse;
 					}
 					for (int i = 0; i < w; i++) {
 						min = noResult;
@@ -303,7 +303,7 @@ public class EDT_S1D implements PlugInFilter {
 								break;
 							}
 						}
-						sk[i + w * j] = min;
+						sk[i + wj] = min;
 					}
 				}
 			}
@@ -397,10 +397,11 @@ public class EDT_S1D implements PlugInFilter {
 			int test, min, delta;
 			for (int j = thread; j < h; j += nThreads) {
 				IJ.showProgress(j / (1. * h));
+				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
 					nonempty = false;
 					for (int k = 0; k < d; k++) {
-						tempS[k] = (int) s[k][i + w * j];
+						tempS[k] = (int) s[k][i + wj];
 						if (tempS[k] > 0) nonempty = true;
 					}
 					if (nonempty) {
@@ -415,7 +416,7 @@ public class EDT_S1D implements PlugInFilter {
 
 						for (int k = 0; k < d; k++) {
 							// Limit to the non-background to save time,
-							if (((data[k][i + w * j] & 255) >= thresh) ^ inverse) {
+							if (((data[k][i + wj] & 255) >= thresh) ^ inverse) {
 								min = noResult;
 								zBegin = zStart;
 								zEnd = zStop;
@@ -431,11 +432,20 @@ public class EDT_S1D implements PlugInFilter {
 							}
 						}
 						for (int k = 0; k < d; k++) {
-							s[k][i + w * j] = tempInt[k];
+							s[k][i + wj] = tempInt[k];
 						}
 					}
 				}
 			}
 		}// run
 	}// Step2Thread
+
+	/**
+	 * Remove references to instance variables to allow garbage collection
+	 */
+	public void purge() {
+		data = null;
+		resultImage = null;
+		imp = null;
+	}
 }
